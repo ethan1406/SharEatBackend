@@ -4,7 +4,8 @@ import config from './config';
 import express from 'express';
 // // import flash from 'connect-flash';
 // import session from 'express-session';
-// import mongoose from 'mongoose';
+import mongoose from 'mongoose';
+import User from './models/user';
 // import bodyParser from 'body-parser';
 
 
@@ -13,12 +14,13 @@ import express from 'express';
 const server = express();
 
 // //mongodb setup
-// mongoose.connect(config.localMongodbUri);
-// const db = mongoose.connection;
-// db.on('error', console.error.bind(console, '# MongoDB - connection error: '));
+mongoose.connect(config.mongodbUri);
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, '# MongoDB - connection error: '));
+
+export default db;
 
 
-// export default db;
 
 
 // server.use(bodyParser.json());
@@ -52,8 +54,6 @@ const server = express();
 // }));
 
 
-
-
 // function loggedIn(req, res, next) {
 //     //console.log(req.user);
 //     if (req.user) {
@@ -76,6 +76,15 @@ const server = express();
 server.get('/test', (req, res) =>
 {
 	res.send('sup');
+});
+
+server.get('/testdb', (req, res) =>
+{
+	var newUser = new User();
+	newUser.id = '12345';
+	newUser.name = 'Ethan Chang';
+	newUser.save();
+	res.send('here');
 });
 
 
