@@ -4,7 +4,7 @@
   "description": "A streamlined payment system for restaurants",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node server.js"
+    "start": "babel-node server.js"
   },
   "author": "Ethan Chang",
   "license": "ISC",

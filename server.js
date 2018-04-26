@@ -1,40 +1,40 @@
 import config from './config';
 // import path from 'path';
-import passport from 'passport';
+// import passport from 'passport';
 import express from 'express';
-// import flash from 'connect-flash';
-import session from 'express-session';
-import mongoose from 'mongoose';
-import bodyParser from 'body-parser';
+// // import flash from 'connect-flash';
+// import session from 'express-session';
+// import mongoose from 'mongoose';
+// import bodyParser from 'body-parser';
 
 
 // import apiRouter from './api';
 
 const server = express();
 
-//mongodb setup
-mongoose.connect(config.localMongodbUri);
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, '# MongoDB - connection error: '));
+// //mongodb setup
+// mongoose.connect(config.localMongodbUri);
+// const db = mongoose.connection;
+// db.on('error', console.error.bind(console, '# MongoDB - connection error: '));
 
 
-export default db;
+// export default db;
 
 
-server.use(bodyParser.json());
-server.use(bodyParser.urlencoded({ extended: false }));
+// server.use(bodyParser.json());
+// server.use(bodyParser.urlencoded({ extended: false }));
 
 
-// require('./config/passport')(passport);
+// // require('./config/passport')(passport);
 
 
-server.use(session({ 
-	secret: 'stephakittie555',
-	resave: false,
-	saveUninitialized: true,
-}));
-server.use(passport.initialize());
-server.use(passport.session());
+// server.use(session({ 
+// 	secret: 'stephakittie555',
+// 	resave: false,
+// 	saveUninitialized: true,
+// }));
+// server.use(passport.initialize());
+// server.use(passport.session());
 
 // server.use(flash());
 
