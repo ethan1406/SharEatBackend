@@ -1,12 +1,12 @@
 import config from './config';
 // import path from 'path';
-// import passport from 'passport';
+import passport from 'passport';
 import express from 'express';
-// // import flash from 'connect-flash';
-// import session from 'express-session';
+import flash from 'connect-flash';
+import session from 'express-session';
 import mongoose from 'mongoose';
 import User from './models/user';
-// import bodyParser from 'body-parser';
+import bodyParser from 'body-parser';
 
 
 // import apiRouter from './api';
@@ -23,55 +23,36 @@ export default db;
 
 
 
-// server.use(bodyParser.json());
-// server.use(bodyParser.urlencoded({ extended: false }));
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({ extended: false }));
 
 
-// // require('./config/passport')(passport);
+require('./config/passport')(passport);
 
 
-// server.use(session({ 
-// 	secret: 'stephakittie555',
-// 	resave: false,
-// 	saveUninitialized: true,
-// }));
-// server.use(passport.initialize());
-// server.use(passport.session());
+server.use(session({ 
+	secret: 'stephakittie555',
+	resave: false,
+	saveUninitialized: true,
+}));
+server.use(passport.initialize());
+server.use(passport.session());
 
-// server.use(flash());
-
-
-// server.get('/auth/facebook', passport.authenticate('facebook', { scope : ['email', 'user_friends'],
-// 																failureFlash: true }));
-
-//     // handle the callback after facebook has authenticated the user
-// server.get('/auth/facebook/callback',
-//         passport.authenticate('facebook', {
-//             successRedirect : '/friendList',
-//             failureRedirect : '/login',
+server.use(flash());
 
 
-// }));
+server.get('/auth/facebook', passport.authenticate('facebook', { scope : ['email', 'user_friends'],
+																failureFlash: true ,
+																successFlash: 'Welcome!'}));
+
+    // handle the callback after facebook has authenticated the user
+server.get('/auth/facebook/callback',
+        passport.authenticate('facebook', {
+            successRedirect : '/loginsuccess',
+            failureRedirect : '/login',
 
 
-// function loggedIn(req, res, next) {
-//     //console.log(req.user);
-//     if (req.user) {
-//         next();
-//     } else {
-//         res.redirect('/login');
-//     }
-// }
-
-// server.get('/login', (req,res) => {
-// 	res.render('index', {
-// 		content: '...'
-// 	});
-// });
-
-
-// server.use('/api', apiRouter);
-
+}));
 
 server.get('/test', (req, res) =>
 {
@@ -86,6 +67,35 @@ server.get('/testdb', (req, res) =>
 	newUser.save();
 	res.send('here');
 });
+
+
+// function loggedIn(req, res, next) {
+//     //console.log(req.user);
+//     if (req.user) {
+//         next();
+//     } else {
+//         res.redirect('/login');
+//     }
+// }
+
+server.get('/login', (req,res)=> {
+	res.send('youre not logged in');
+});
+
+server.get('/loginsuccess', (req,res)=> {
+	res.send('youre logged in');
+});
+
+// server.get('*', loggedIn, (req, res) => {
+
+//  //res.render(__dirname + "/views/index.ejs");
+//   res.render('index', {
+//     content: '...'
+//   });
+// });
+
+// server.use('/api', apiRouter);
+
 
 
 server.listen(config.port, () => {
