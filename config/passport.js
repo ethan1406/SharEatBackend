@@ -67,10 +67,10 @@ module.exports = function(passport) {
                     // set all of the facebook information in our user model
                     newUser.facebook.id    = profile.id; // set the users facebook id                   
                     newUser.facebook.token = token; // we will save the token that facebook provides to the user                    
-                    newUser.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName; // look at the passport user profile to see how names are returned
+                    newUser.name  = profile.name.givenName + ' ' + profile.name.familyName; // look at the passport user profile to see how names are returned
                     if(profile.emails !== undefined)
-                    newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
-                    newUser.facebook.dpUrl = profile._json.picture.data.url;
+                    newUser.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+                    newUser.profilepic = profile._json.picture.data.url;
 
 
                     var promises = [];
@@ -96,9 +96,9 @@ module.exports = function(passport) {
                                         });
                                         if( alreadyExisted.length === 0){
                                             var friendObject = {};
-                                            friendObject['name'] = newUser.facebook.name;
+                                            friendObject['name'] = newUser.name;
                                             friendObject['id'] = newUser.facebook.id;
-                                            friendObject['dpUrl'] = newUser.facebook.dpUrl;
+                                            friendObject['profilepic'] = newUser.profilepic;
                                             existedUser.friends.push(friendObject);
                                             
                                             existedUser.save((err, updatedExistedUser) => {
@@ -110,10 +110,10 @@ module.exports = function(passport) {
                                        
 
                                         //assigning dpUrl to the user
-                                        mutualfriend.dpUrl = existedUser.facebook.dpUrl;
+                                        mutualfriend.profilepic = existedUser.profilepic;
                                     } else{
                                         //testing purposes
-                                        mutualfriend['dpUrl'] = 'testing';
+                                        mutualfriend['profilepic'] = 'testing';
                                     }
                                     resolve();
                               
