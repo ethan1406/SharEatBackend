@@ -1,8 +1,8 @@
 module.exports = {
     'facebookAuth' : {
-        'clientID'      : '775610585933474', // your App ID
-        'clientSecret'  : '8ce931d8eb2cf5c67ea80968b171740d', // your App Secret
-        'callbackURL'   : 'http://localhost:8080/auth/facebook/callback'
+        'clientID'      : '184399145517801', // your App ID
+        'clientSecret'  : '1bc61b99aadaab8145b57af3a63e2934', // your App Secret
+        'callbackURL'   : 'https://www.shareatpay.com/auth/facebook/callback'
         //'https://refriendonline.herokuapp.com/auth/facebook/callback'
     }
 };

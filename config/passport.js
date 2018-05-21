@@ -15,6 +15,7 @@ var User       = require('../models/user');
 // load the auth variables
 var configAuth = require('./auth');
 
+
 module.exports = function(passport) {
 
     // used to serialize the user for the session
@@ -31,17 +32,20 @@ module.exports = function(passport) {
     
 
     // code for login (use('local-signup', new LocalStategy))
-    passport.use('local-signup', new LocalStrategy({
+    passport.use('local-signup', new LocalStrategy(
+    {
         // by default, local strategy uses username and password, we will override with email
         usernameField : 'email',
         passwordField : 'password',
         passReqToCallback : true // allows us to pass back the entire request to the callback
     },
-    function(req, email, password, done) {
+    function(req, email, password, done) 
+    {
 
         // asynchronous
         // User.findOne wont fire unless data is sent back
-        process.nextTick(function() {
+        process.nextTick(function() 
+        {
 
         // find a user whose email is the same as the forms email
         // we are checking to see if the user trying to login already exists
@@ -51,9 +55,11 @@ module.exports = function(passport) {
                 return done(err);
 
             // check to see if theres already a user with that email
-            if (user) {
+            if (user) 
+            {
                 return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
-            } else {
+            } else 
+            {
 
                 // if there is no user with that email
                 // create the user
@@ -64,7 +70,8 @@ module.exports = function(passport) {
                 newUser.password = newUser.generateHash(password);
 
                 // save the user
-                newUser.save(function(err) {
+                newUser.save(function(err) 
+                {
                     if (err)
                         throw err;
                     return done(null, newUser);

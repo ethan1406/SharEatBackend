@@ -107,24 +107,10 @@ server.get('/test', (req, res) =>
 	res.send('sup');
 });
 
-// server.get('/testdb', (req, res) =>
-// {
-// 	var newUser = new User();
-// 	newUser.id = '12345';
-// 	newUser.name = 'Ethan Chang';
-// 	newUser.save();
-// 	res.send('here');
-// });
-
-
-// function loggedIn(req, res, next) {
-//     //console.log(req.user);
-//     if (req.user) {
-//         next();
-//     } else {
-//         res.redirect('/login');
-//     }
-// }
+server.get('/user', (req, res) =>
+{
+	res.send(req.user);
+});
 
 
 
@@ -140,7 +126,6 @@ server.get('/loginsuccess', (req,res)=> {
 //   });
 // });
 
-// server.use('/api', apiRouter);
 
 server
 .use(vhost('api.shareatpay.com', subdomain.app))
