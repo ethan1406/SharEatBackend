@@ -36,8 +36,14 @@ server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({ extended: false }));
 
 
+server.get('*', function(req, res, next){ 
+  console.log(req.headers.host);
+  console.log(req.url);
+  next(); 
+});
+
 server
-.use(vhost('api.localhost', subdomain.app))
+.use(vhost('api.shareatpay.com', subdomain.app))
 .listen(config.port, () => {
   console.info('Express listening on port', config.port);
 });

@@ -25,13 +25,6 @@ app.use(passport.session());
 app.set('view engine', 'ejs');
 
 
-router.get('*', function(req, res, next){ 
-  console.log(req.headers.host);
-  console.log(req.url);
-  next(); 
-});
-
-
 
 router.get('/auth/facebook', passport.authenticate('facebook', { scope : ['email', 'user_friends'],
 																failureFlash: true ,
