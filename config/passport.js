@@ -44,6 +44,7 @@ module.exports = function(passport) {
 
         // asynchronous
         // User.findOne wont fire unless data is sent back
+        password = password.trim();
         process.nextTick(function() 
         {
 
@@ -57,9 +58,35 @@ module.exports = function(passport) {
             // check to see if theres already a user with that email
             if (user) 
             {
-                return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+                return done(null, false, {message: 'That email is already taken.'});
             } else 
             {
+                if(password.length <= 7)
+                {
+                   return done(null, false, {message: 'Password must be longer than 7 letters.'});
+                }
+                var letterNum = 0;
+                var numNum = 0;
+                for(var i = 0; i < password.length ; i++)
+                {
+                    if(password[i] >= '0' && password[i] <= '9')
+                    {
+                        numNum ++;
+                    }
+                    if((password[i] >= 'a' && password[i] <= 'z') || (password[i] >= 'A' && password[i] <= 'Z'))
+                    {
+                        letterNum ++;
+                    }
+                }
+
+                if(!numNum)
+                {
+                    return done(null, false, {message: 'Password must contain at least one number.'});
+                }
+                if(!letterNum)
+                {
+                    return done(null, false, {message: 'Password must contain at least one letter.'});
+                }
 
                 // if there is no user with that email
                 // create the user
@@ -95,6 +122,7 @@ module.exports = function(passport) {
 
         // find a user whose email is the same as the forms email
         // we are checking to see if the user trying to login already exists
+        password = password.trim();
         User.findOne({ 'email' :  email }, function(err, user) {
             // if there are any errors, return the error before anything else
             if (err)
@@ -102,11 +130,11 @@ module.exports = function(passport) {
 
             // if no user is found, return the message
             if (!user)
-                return done(null, false, req.flash('loginMessage', 'No user found.')); // req.flash is the way to set flashdata using connect-flash
+                return done(null, false, {message: 'No user found.'}); // req.flash is the way to set flashdata using connect-flash
 
             // if the user is found but the password is wrong
             if (!user.validPassword(password))
-                return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.')); // create the loginMessage and save it to session as flashdata
+                return done(null, false, {message: 'Incorrect password.'}); // create the loginMessage and save it to session as flashdata
 
             // all is well, return successful user
             return done(null, user);

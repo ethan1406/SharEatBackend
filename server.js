@@ -85,18 +85,56 @@ server.get('/login', (req,res)=> {
 });
 
 
-server.post('/signup', passport.authenticate('local-signup', {
-        successRedirect : '/loginsuccess', // redirect to the secure profile section
-        failureRedirect : '/signup', // redirect back to the signup page if there is an error
-        failureFlash : true // allow flash messages
- }));
+server.post('/signup', (req, res, next) => {
+	passport.authenticate('local-signup', (err, user, info) =>{
+		if(err)
+		{
+			return next(err);
+		}
+		if(!user)
+		{
+			req.session.message = info.message;
+			return res.send({ status: -1, message: info.message });
+		}
+		req.logIn(user, function(err) {
+			if (err) { return next(err); }
+			return res.send({ status : 0 });
+		});
+	})(req, res, next);
+});
+
+// server.post('/signup', passport.authenticate('local-signup', {
+//         successRedirect : '/loginsuccess', // redirect to the secure profile section
+//         failureRedirect : '/signup', // redirect back to the signup page if there is an error
+//         failureFlash : true // allow flash messages
+//  }));
 
 
-server.post('/login', passport.authenticate('local-login', {
-        successRedirect : '/loginsuccess', // redirect to the secure profile section
-        failureRedirect : '/login', // redirect back to the signup page if there is an error
-        failureFlash : true // allow flash messages
-}));
+
+server.post('/login', (req, res, next) => {
+	passport.authenticate('local-login', (err, user, info) =>{
+		if(err)
+		{
+			return next(err);
+		}
+		if(!user)
+		{
+			req.session.message = info.message;
+			return res.send({ status: -1, message: info.message });
+		}
+		req.logIn(user, function(err) {
+			if (err) { return next(err); }
+			return res.send({ status : 0 });
+		});
+	})(req, res, next);
+});
+
+
+// server.post('/login', passport.authenticate('local-login', {
+//         successRedirect : '/loginsuccess', // redirect to the secure profile section
+//         failureRedirect : '/login', // redirect back to the signup page if there is an error
+//         failureFlash : true // allow flash messages
+// }));
 
 
 
