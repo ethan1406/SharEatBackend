@@ -137,7 +137,99 @@ server.post('/login', (req, res, next) => {
 // }));
 
 
+import Merchant from './models/merchant';
 
+
+server.get('/map/find', (req, res) =>
+{
+	var name = req.query.name.toLowerCase();
+	console.log('check this out  ' + name);
+	var query = Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10);
+
+	query.exec((err, merchants) =>
+	{
+		res.json(merchants);
+	});
+
+	// Merchant.findOne({'name_lower' : { $regex: new RegExp(name, 'i') }}, (err, merchant) => {
+	// 	if(err)
+	// 	{
+	// 		console.log(err);
+	// 	}
+	// 	if(merchant)
+	// 	{
+	// 		res.json(merchant);
+	// 	}
+	// 	else
+	// 	{
+	// 		res.json({});
+	// 	}	
+	// });
+});
+
+
+
+server.get('/map/findclosest', (req, res) =>
+{
+	const currLatitude = req.query.latitude;
+	const currLongitude = req.query.longitude;
+
+	Merchant.find({}, (err, merchants) => {
+		if(err)
+		{
+			console.log(err);
+		}
+		var distances = [];
+
+		var index = 0;
+		merchants.forEach((merchant) => {
+			const R = 6371;
+
+			const lat = merchant.location.latitude;
+			const lon = merchant.location.longitude;
+			const dLat = currLatitude - lat;
+			const dLon = currLongitude - lon;
+
+			const temp = Math.sin(dLat/2) * Math.sin(dLat/2)
+				+ Math.cos(lat) * Math.cos(currLatitude)
+				* Math.sin(dLon/2) * Math.sin(dLon/2);
+
+			const temp2 = 2 * Math.atan2(Math.sqrt(temp), Math.sqrt(1-temp));
+
+			const distance = R * temp2;
+			distances.push({distance, index});
+			index++;
+
+		});
+		distances.sort((a , b) => {
+			return a.distance - b.distance;
+		});
+
+		var closestMerchants = [];
+
+		const numMerchants = distances.length > 10 ? 10 : distances.length;
+		for(var i = 0; i < numMerchants; i++)
+		{
+			closestMerchants.push(merchants[distances[i].index]);
+		}
+
+
+		res.json(closestMerchants);
+
+	});
+	
+});
+
+server.get('/mer', (req, res) =>
+{
+	var merchant = new Merchant();
+	merchant.email = 'qinwest@gmail.com';
+	merchant.name = "Qin West Noodle";
+	merchant.location.latitude = 0.593909085261;
+	merchant.location.longitude = -2.064290598799;
+	merchant.save();
+
+});
 
 
 server.get('/test', (req, res) =>
