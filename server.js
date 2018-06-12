@@ -11,6 +11,10 @@ import flash from 'connect-flash';
 import vhost from 'vhost';
 import subdomain from './routes/api';
 
+//aws s3
+import AWS from 'aws-sdk';
+const s3 = new AWS.S3();
+
 // import apiRouter from './api';
 
 const server = express();
@@ -59,6 +63,11 @@ server.use(passport.session());
 //testing purposes
 server.set('view engine', 'ejs');
 
+
+
+
+
+// Authenticaiton APIs
 
 
 server.get('/auth/facebook', passport.authenticate('facebook', { scope : ['email', 'user_friends'],
@@ -143,30 +152,16 @@ import Merchant from './models/merchant';
 server.get('/map/find', (req, res) =>
 {
 	var name = req.query.name.toLowerCase();
-	console.log('check this out  ' + name);
 	var query = Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10);
 
 	query.exec((err, merchants) =>
 	{
 		res.json(merchants);
 	});
-
-	// Merchant.findOne({'name_lower' : { $regex: new RegExp(name, 'i') }}, (err, merchant) => {
-	// 	if(err)
-	// 	{
-	// 		console.log(err);
-	// 	}
-	// 	if(merchant)
-	// 	{
-	// 		res.json(merchant);
-	// 	}
-	// 	else
-	// 	{
-	// 		res.json({});
-	// 	}	
-	// });
 });
 
+
+// merchant APIs
 
 
 server.get('/map/findclosest', (req, res) =>
@@ -182,6 +177,8 @@ server.get('/map/findclosest', (req, res) =>
 		var distances = [];
 
 		var index = 0;
+
+		//Haversine Formula
 		merchants.forEach((merchant) => {
 			const R = 6371;
 
@@ -220,7 +217,28 @@ server.get('/map/findclosest', (req, res) =>
 	
 });
 
-server.get('/mer', (req, res) =>
+//return menu based on restaurant id
+server.get('/menu/:id', (req, res)=> {
+
+	Merchant.findOne({_id: req.params.id}, 'menu', (err, merchant) => {
+		if(err)
+		{
+			console.log('menu error' + err);
+		}
+
+		res.json(merchant);
+
+	});
+
+});
+
+
+
+
+
+
+
+server.post('/mer', (req, res) =>
 {
 	var merchant = new Merchant();
 	merchant.email = 'qinwest@gmail.com';

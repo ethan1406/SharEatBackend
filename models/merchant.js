@@ -6,18 +6,22 @@ import mongoose from 'mongoose';
 
 // define the schema for our user model
 var merchantSchema = mongoose.Schema({
-    email        	 : String,
-    name         	 : String,
-    name_lower       : String,
+    email        	     : String,
+    name         	     : String,
+    name_lower           : String,
     //password         : String,
-    profilepic       : String,
-    location         : {
-        longitude    : Number,
-        latitude     : Number
+    profilepic           : String,
+    location             : {
+        longitude        : Number,
+        latitude         : Number
     },
-    menu             : [{
-        dish         : String,
-        picture      : String
+    menu                 : [{
+        section          : [{
+            title        : String,
+            price        : Number,
+            description  : String,
+            picture      : String
+        }]
     }]
 });
 
