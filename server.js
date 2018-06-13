@@ -236,8 +236,6 @@ server.get('/menu/:id', (req, res)=> {
 
 
 
-
-
 server.post('/mer', (req, res) =>
 {
 	var merchant = new Merchant();
