@@ -12,8 +12,8 @@ import vhost from 'vhost';
 import subdomain from './routes/api';
 
 //aws s3
-import AWS from 'aws-sdk';
-const s3 = new AWS.S3();
+// import AWS from 'aws-sdk';
+// const s3 = new AWS.S3();
 
 // import apiRouter from './api';
 
@@ -218,12 +218,12 @@ server.get('/map/findclosest', (req, res) =>
 });
 
 //return menu based on restaurant id
-server.get('/menu/:id', (req, res)=> {
+server.get('/menu/:restaurantId', (req, res)=> {
 
-	Merchant.findOne({_id: req.params.id}, 'menu', (err, merchant) => {
+	Merchant.findOne({_id: req.params.restaurantId}, 'menu', (err, merchant) => {
 		if(err)
 		{
-			console.log('menu error' + err);
+			console.log('menu error: ' + err);
 		}
 
 		res.json(merchant);
@@ -233,6 +233,85 @@ server.get('/menu/:id', (req, res)=> {
 });
 
 
+
+
+import Party from './models/party';
+/*
+	Table Logic
+
+*/
+// join a table at a restaurant
+server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
+
+	if(!req.user)
+	{
+		console.log('user is not logged in');
+	}
+	else
+	{
+		Merchant.findOne({_id: req.params.restaurantId}, (err, merchant) => {
+			if(err)
+			{
+				console.log('table join merchant error: ' + err);
+			}
+
+			if(!merchant)
+			{
+				console.log('no merchant by the id exists');
+			}
+			else
+			{
+				Party.findOne({restaurantId: req.params.restaurantId, tableNumber: req.params.tableNumber}, (err, party) => {
+					if(err)
+					{
+						console.log('table join party error: ' + err);
+					}
+					if(party)
+					{
+						party.members.push(req.user._id);
+
+						party.save((err) => {
+							if(err)
+							{
+								console.log('failed to save a party member" ' + err);
+							}
+						});
+						return res.send({ status : 0 });
+					}
+					else
+					{
+						console.log('here');
+						var newParty = new Party();	
+						newParty.members.push(req.user._id);
+						newParty.restaurantId = req.params.restaurantId;
+						newParty.tableNumber = req.params.tableNumber;
+						newParty.time = Date.now();
+						newParty.save((err) => {
+							if(err)
+							{
+								console.log('failed to save a new party: " ' + err);
+							}
+						});
+						return res.send({ status : 0 });
+					}
+					
+				});
+			}
+
+
+		});
+	}
+});
+
+
+
+
+/*
+================================================
+================================================
+FUNCITONS FOR TESTING PURPOSES
+
+*/
 
 
 
@@ -264,6 +343,13 @@ server.get('/loginsuccess', (req,res)=> {
 	res.send('youre logged in');
 });
 
+/*
+================================================
+================================================
+================================================
+================================================
+
+
 // server.get('*', loggedIn, (req, res) => {
 
 //  //res.render(__dirname + "/views/index.ejs");
@@ -271,6 +357,12 @@ server.get('/loginsuccess', (req,res)=> {
 //     content: '...'
 //   });
 // });
+================================================
+================================================
+================================================
+*/
+
+
 
 
 server

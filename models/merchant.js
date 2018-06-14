@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 //const saltRounds = 10;
 
-// define the schema for our user model
+// define the schema for our merchant model
 var merchantSchema = mongoose.Schema({
     email        	     : String,
     name         	     : String,
@@ -38,7 +38,7 @@ var merchantSchema = mongoose.Schema({
 
 
 
-// create the model for users and expose it to our app
+// create the model for merchants and expose it to our app
 module.exports = mongoose.model('Merchant', merchantSchema);
 
 

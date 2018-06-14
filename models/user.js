@@ -14,6 +14,12 @@ var userSchema = mongoose.Schema({
     name         	 : String,
     password         : String,
     profilepic       : String,
+    pastOrders       : [{
+        time         : Date,
+        restaurantId : String,
+        orders       : Array
+
+    }],
     friends          : Array
 });
 
