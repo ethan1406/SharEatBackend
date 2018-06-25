@@ -15,14 +15,8 @@ var merchantSchema = mongoose.Schema({
         longitude        : Number,
         latitude         : Number
     },
-    menu                 : [{
-        section          : [{
-            title        : String,
-            price        : Number,
-            description  : String,
-            picture      : String
-        }]
-    }]
+    menu                 : {
+    }
 });
 
 // methods ======================

@@ -220,13 +220,13 @@ server.get('/map/findclosest', (req, res) =>
 //return menu based on restaurant id
 server.get('/menu/:restaurantId', (req, res)=> {
 
-	Merchant.findOne({_id: req.params.restaurantId}, 'menu', (err, merchant) => {
+	Merchant.findOne({_id: req.params.restaurantId}, 'menu', (err, menu) => {
 		if(err)
 		{
 			console.log('menu error: ' + err);
 		}
 
-		res.json(merchant);
+		res.json(menu);
 
 	});
 
@@ -284,6 +284,7 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 						var newParty = new Party();	
 						newParty.members.push(req.user._id);
 						newParty.restaurantId = req.params.restaurantId;
+						newParty.finished = false;
 						newParty.tableNumber = req.params.tableNumber;
 						newParty.time = Date.now();
 						newParty.save((err) => {
@@ -302,6 +303,9 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 		});
 	}
 });
+
+
+
 
 
 
