@@ -307,6 +307,28 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 
 
 
+server.post('/order/:partyId/:foodId', (req, res) => {
+
+	const update = {
+		'$push': {
+			orders:{
+				foodId: req.params.foodId, 
+				buyers:[req.user._id]
+			}
+		}
+	};
+	
+	Party.findOneAndUpdate({_id: req.params.partyId}, update, (err) => {
+		if(err)
+		{
+			console.log('failed to add a new order to the part: " ' + err);
+		}
+
+		return res.send({ status : 0 });
+	});
+
+});
+
 
 
 
@@ -319,14 +341,9 @@ FUNCITONS FOR TESTING PURPOSES
 
 
 
-server.post('/mer', (req, res) =>
+server.post('/mer', async (req, res) =>
 {
-	var merchant = new Merchant();
-	merchant.email = 'qinwest@gmail.com';
-	merchant.name = "Qin West Noodle";
-	merchant.location.latitude = 0.593909085261;
-	merchant.location.longitude = -2.064290598799;
-	merchant.save();
+	await Merchant.insertDefaultPassengers();
 
 });
 
@@ -361,6 +378,14 @@ server.get('/loginsuccess', (req,res)=> {
 //     content: '...'
 //   });
 // });
+// if(typeof (party.orders.find(order => order.foodId === req.params.foodId)) === 'undefined')
+			// {
+			// 	party.orders.push({foodId: req.params.foodId, buyers:[req.user._id]});
+			// }
+			// else
+			// {
+			// 	party.orders.
+			// }
 ================================================
 ================================================
 ================================================
