@@ -11,6 +11,7 @@ var PartySchema = mongoose.Schema({
     time                 : Date,
     orders               : [{
         foodId           : mongoose.Schema.Types.ObjectId,
+        orderId          : mongoose.Schema.Types.ObjectId,
         buyers           : Array
         
     }]

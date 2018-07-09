@@ -258,6 +258,7 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 			if(!merchant)
 			{
 				console.log('no merchant by the id exists');
+				return res.send({ status : -1, message: 'no merchant by the id exists'});
 			}
 			else
 			{
@@ -275,8 +276,8 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 							{
 								console.log('failed to save a party member" ' + err);
 							}
+							return res.send({ status : 0, partyId: party._id});
 						});
-						return res.send({ status : 0 });
 					}
 					else
 					{
@@ -292,8 +293,8 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 							{
 								console.log('failed to save a new party: " ' + err);
 							}
+							return res.send({ status : 0, partyId: newParty._id});
 						});
-						return res.send({ status : 0 });
 					}
 					
 				});
@@ -306,31 +307,38 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 
 
 
-
 server.post('/order/:partyId/:foodId', (req, res) => {
-
-	const update = {
-		'$push': {
-			orders:{
-				foodId: req.params.foodId, 
-				buyers:[req.user._id]
-			}
-		}
-	};
 	
-	Party.findOneAndUpdate({_id: req.params.partyId}, update, (err) => {
+	Party.findOne({_id: req.params.partyId}, 'orders', (err, orders) => {
 		if(err)
 		{
-			console.log('failed to add a new order to the part: " ' + err);
+			console.log('failed to add a new order to the party: " ' + err);
 		}
-
-		return res.send({ status : 0 });
+		const orderId = new mongoose.Types.ObjectId;
+		orders.orders.push({foodId : req.params.foodId, orderId, buyers:[req.user._id]});
+		orders.save((err) =>{
+			if(err)
+			{
+				console.log('failed to add a new order to the orders: " ' + err);
+			}
+			return res.send({ status : 0, orderId});
+		});
 	});
 
 });
 
 
 
+
+// const update = {
+// 		'$push': {
+// 			orders:{
+// 				foodId: req.params.foodId, 
+// 				buyers:[req.user._id]
+// 			}
+// 		}
+// 	};
+	
 
 /*
 ================================================
@@ -343,7 +351,7 @@ FUNCITONS FOR TESTING PURPOSES
 
 server.post('/mer', async (req, res) =>
 {
-	await Merchant.insertDefaultPassengers();
+	return await Merchant.insertDefaultPassengers();
 
 });
 
