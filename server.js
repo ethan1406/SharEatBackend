@@ -314,13 +314,13 @@ server.post('/order/:partyId/:foodId', (req, res) => {
 		{
 			console.log('failed to add a new order to the party: " ' + err);
 		}
-		const orderId = new mongoose.Types.ObjectId;
-		orders.orders.push({foodId : req.params.foodId, orderId, buyers:[req.user._id]});
-		orders.save((err) =>{
+		orders.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
+		orders.save((err, order) =>{
 			if(err)
 			{
 				console.log('failed to add a new order to the orders: " ' + err);
 			}
+			const orderId = order._id;
 			return res.send({ status : 0, orderId});
 		});
 	});
