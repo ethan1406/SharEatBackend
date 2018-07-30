@@ -20,7 +20,8 @@ var UserSchema = mongoose.Schema({
         orders       : Array
 
     }],
-    friends          : Array
+    friends          : Array,
+    stripeCustomerId : String
 });
 
 // methods ======================
