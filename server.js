@@ -1,10 +1,11 @@
 import config from './config';
-// import path from 'path';
+import path from 'path';
 import morgan from 'morgan';
 import express from 'express';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
+//import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
 //handling subdomains
@@ -37,23 +38,25 @@ server.use(session({
 	saveUninitialized: true,
 }));
 
+// server.use(sassMiddleware({
+// 	src: path.join(__dirname, 'sass'),
+// 	dest: path.join(__dirname, 'public'),
+// 	debug: true 
+// }));
+
 server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({ extended: false }));
 
 
-server.get('*', function(req, res, next){ 
-  console.log(req.headers.host);
-  console.log(req.url);
-  next(); 
-});
-
+// server.get('*', function(req, res, next){ 
+//   console.log(req.headers.host);
+//   console.log(req.url);
+//   next(); 
+// });
 
 server.use(flash());
 
-
 require('./config/passport')(passport);
-
-
 
 server.use(passport.initialize());
 server.use(passport.session());
@@ -62,8 +65,7 @@ server.use(passport.session());
 
 //testing purposes
 server.set('view engine', 'ejs');
-
-
+server.use(express.static('public'));
 
 
 
@@ -325,6 +327,37 @@ server.post('/order/:partyId/:foodId', (req, res) => {
 		});
 	});
 
+});
+
+
+// creating an ephemeral key for Stripe
+// server.post('/order/ephemeral_keys', async (req, res) => {
+// 	const apiVersion = req.body['api_version'];
+// 	try {
+// 		// Find the latest passenger (see note above).
+// 		const passenger = await Passenger.getLatest();
+// 		// Create ephemeral key for customer.
+// 		const ephemeralKey = await stripe.ephemeralKeys.create({
+// 		customer: passenger.stripeCustomerId
+// 	}, {
+// 		stripe_version: apiVersion
+// 	});
+// 	// Respond with ephemeral key.
+// 		res.send(ephemeralKey);
+// 	} catch (err) {
+// 		res.sendStatus(500);
+// 		next(`Error creating ephemeral key for customer: ${err.message}`);
+// 	}
+// });
+
+
+
+
+//
+server.get('/merchant/dashboard', (req,res) => {
+	res.render('index', {
+		content: 'sup'
+	});
 });
 
 
