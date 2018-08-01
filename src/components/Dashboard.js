@@ -16,7 +16,7 @@ class Dashboard extends Component {
                     <button id = 'loginBtn' style={{display:"block", marginTop: "10px"}} 
                     className="col-sm-2 col-sm-offset-5  btn btn-danger">Login</button>
                     <a id = 'loginBtn' style={{display:"block", marginTop: "10px"}} 
-                    className="col-sm-2 col-sm-offset-5  btn btn-primary" href="/merchant/authorize">Connect With Stripe</a>
+                    className="col-sm-2 col-sm-offset-5  btn btn-primary" href="/merchant/authorize">Connect With Stripe Testing</a>
             </div>
         </div>
         );
