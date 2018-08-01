@@ -11,12 +11,12 @@ var LocalStrategy = require('passport-local').Strategy;
 // load up the user model
 var User       = require('../models/user');
 
-
 // load the auth variables
 var configAuth = require('./auth');
+const stripe = require('stripe')(configAuth.stripe.secretKey);
 
 
-module.exports = function(passport) {
+module.exports = async function(passport) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
@@ -39,18 +39,18 @@ module.exports = function(passport) {
         passwordField : 'password',
         passReqToCallback : true // allows us to pass back the entire request to the callback
     },
-    function(req, email, password, done) 
+    async function(req, email, password, done) 
     {
 
         // asynchronous
         // User.findOne wont fire unless data is sent back
         password = password.trim();
-        process.nextTick(function() 
+        process.nextTick(async function() 
         {
 
         // find a user whose email is the same as the forms email
         // we are checking to see if the user trying to login already exists
-        User.findOne({ 'email' :  email }, function(err, user) {
+        User.findOne({ 'email' :  email }, async function(err, user) {
             // if there are any errors, return the error
             if (err)
                 return done(err);
@@ -91,16 +91,24 @@ module.exports = function(passport) {
                 // if there is no user with that email
                 // create the user
                 var newUser            = new User();
-
                 // set the user's local credentials
                 newUser.email    = email;
                 newUser.password = newUser.generateHash(password);
 
+                
+                // Create a Stripe account for the user
+                const customer = await stripe.customers.create({
+                    email: newUser.email,
+                    description: `Customer for ${newUser.email}`
+                });
+                newUser.stripeCustomerId = customer.id;
+    
                 // save the user
                 newUser.save(function(err) 
                 {
-                    if (err)
+                    if (err){
                         throw err;
+                    }
                     return done(null, newUser);
                 });
             }
@@ -154,14 +162,14 @@ module.exports = function(passport) {
     },
 
     // facebook will send back the token and profile
-    function(token, refreshToken, profile, done) {
+    async function(token, refreshToken, profile, done) {
 
         //asynchronous
-        process.nextTick(function() {
+        process.nextTick(async function() {
             
            //console.log(profile._json.friends);
             // find the user in the database based on their facebook id
-            User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
+            User.findOne({ 'facebook.id' : profile.id }, async function(err, user) {
 
                 // if there is an error, stop everything and return that
                 // ie an error connecting to the database
@@ -187,7 +195,13 @@ module.exports = function(passport) {
                     if(profile.emails !== undefined)
                     newUser.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
                     newUser.profilepic = profile._json.picture.data.url;
-
+                    
+                    // Create a Stripe account for the user
+                    const customer = await stripe.customers.create({
+                        email: newUser.email,
+                        description: `Customer for ${newUser.email}`
+                    });
+                    newUser.stripeCustomerId = customer.id;
 
                     var promises = [];
                     var friends =  profile._json.friends.data.map((friend) =>{

@@ -17,7 +17,9 @@ const MerchantSchema = mongoose.Schema({
         latitude         : Number
     },
     menu                 : {
-    }
+    },
+    // Stripe account ID to send payments obtained with Stripe Connect.
+    stripeAccountId: String
 });
 
 // methods ======================
