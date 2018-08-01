@@ -36,10 +36,12 @@
     "passport-facebook": "^2.1.1",
     "passport-local": "^1.0.0",
     "prop-types": "^15.6.2",
+    "querystring": "^0.2.0",
     "react": "^16.4.1",
     "react-bootstrap": "^0.32.1",
     "react-dom": "^16.4.1",
     "react-router-dom": "^4.3.1",
+    "stripe": "^6.5.0",
     "vhost": "^3.0.2"
   }
 }

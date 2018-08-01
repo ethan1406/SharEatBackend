@@ -5,12 +5,13 @@ import express from 'express';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-//import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
 //handling subdomains
 import vhost from 'vhost';
 import subdomain from './routes/api';
+import configAuth from './config/auth'
+import querystring from 'querystring'
 
 //aws s3
 // import AWS from 'aws-sdk';
@@ -21,7 +22,7 @@ import subdomain from './routes/api';
 const server = express();
 
 // //mongodb setup
-mongoose.connect(config.mongodbUri);
+mongoose.connect(config.mongodbUri, { useNewUrlParser: true });
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, '# MongoDB - connection error: '));
 
@@ -352,25 +353,88 @@ server.post('/order/:partyId/:foodId', (req, res) => {
 
 
 
+const stripe = require('stripe')(configAuth.stripe.secretKey);
 
-//
+
 server.get('/merchant/dashboard', (req,res) => {
 	res.render('index', {
 		content: 'sup'
 	});
 });
 
+/**
+ * GET 
+ *
+ * Redirect to Stripe to set up payments.
+ */
+ server.get('/merchant/authorize', (req,res) => {
+	//Generate a random string as state to protect from CSRF and place it in the session.
+	req.session.state = Math.random().toString(36).slice(2);
+	// Prepare the mandatory Stripe parameters.
+	let parameters = {
+		client_id: configAuth.stripe.clientId,
+		state: req.session.state
+	};
+	// Optionally, Stripe Connect accepts `first_name`, `last_name`, `email`,
+	// and `phone` in the query parameters for them to be autofilled.
+	parameters = Object.assign(parameters, {
+		// 'stripe_user[business_type]': req.user.type || 'individual',
+		// 'stripe_user[first_name]': req.user.firstName || undefined,
+		// 'stripe_user[last_name]': req.user.lastName || undefined,
+		'stripe_user[email]': 'asdfasdfa',
+		
+	});
+	// Redirect to Stripe to start the Connect onboarding.
+	res.redirect(configAuth.stripe.authorizeUri + '?' + querystring.stringify(parameters));
+});
+
+
+ server.get('/merchant/authorize', (req,res) => {
+	//Generate a random string as state to protect from CSRF and place it in the session.
+	req.session.state = Math.random().toString(36).slice(2);
+	// Prepare the mandatory Stripe parameters.
+	let parameters = {
+		client_id: configAuth.stripe.clientId,
+		state: req.session.state
+	};
+	// Optionally, Stripe Connect accepts `first_name`, `last_name`, `email`,
+	// and `phone` in the query parameters for them to be autofilled.
+	parameters = Object.assign(parameters, {
+		// 'stripe_user[business_type]': req.user.type || 'individual',
+		// 'stripe_user[first_name]': req.user.firstName || undefined,
+		// 'stripe_user[last_name]': req.user.lastName || undefined,
+		'stripe_user[email]': 'asdfasdfa',
+		
+	});
+	// Redirect to Stripe to start the Connect onboarding.
+	res.redirect(configAuth.stripe.authorizeUri + '?' + querystring.stringify(parameters));
+});
+
+
+/**
+ * POST /api/passengers/me/ephemeral_keys
+ *
+ * Generate an ephemeral key for the logged in customer.
+ */
+server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
+	const apiVersion = req.body['api_version'];
+	try {
+	// Create ephemeral key for customer.
+		const ephemeralKey = await stripe.ephemeralKeys.create({
+			customer: req.user.stripeCustomerId
+		}, {
+			stripe_version: apiVersion
+		});
+		// Respond with ephemeral key.
+		res.send(ephemeralKey);
+	} catch (err) {
+		res.sendStatus(500);
+		next(`Error creating ephemeral key for customer: ${err.message}`);
+	}
+});
 
 
 
-// const update = {
-// 		'$push': {
-// 			orders:{
-// 				foodId: req.params.foodId, 
-// 				buyers:[req.user._id]
-// 			}
-// 		}
-// 	};
 	
 
 /*

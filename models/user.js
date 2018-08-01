@@ -21,6 +21,7 @@ var UserSchema = mongoose.Schema({
 
     }],
     friends          : Array,
+    // Stripe customer ID storing the payment sources.
     stripeCustomerId : String
 });
 
