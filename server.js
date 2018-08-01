@@ -5,7 +5,7 @@ import express from 'express';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-// import sassMiddleware from 'node-sass-middleware';
+//import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
 //handling subdomains
@@ -397,6 +397,8 @@ server.get('/merchant/authorize', (req,res) => {
  */
 server.get('/merchant/token', async (req, res) => {
 	// Check the state we got back equals the one we generated before proceeding.
+	console.log("dkasflkasdlkfnadlskfdjas");
+	console.log(JSON.stringify(req.query));
 	if (req.session.state != req.query.state) {
 		res.redirect('/merchant/dashboard');
 	}
@@ -410,6 +412,7 @@ server.get('/merchant/token', async (req, res) => {
 	},
 		json: true
 	}, (err, response, body) => {
+		console.log("dkasflkasdlkfnadlskfdjas2");
 		if (err || body.error) {
 		  console.log('The Stripe onboarding process has not succeeded.');
 		} else {
@@ -418,6 +421,7 @@ server.get('/merchant/token', async (req, res) => {
 			Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, (err, merchant) => {
 				merchant.stripeAccountId = body.stripe_user_id;
 				merchant.save();
+				console.log("dkasflkasdlkfnadlskfdjas3");
 			});
 		}
 		// Redirect to the final stage.
