@@ -8,15 +8,24 @@ var PartySchema = mongoose.Schema({
     restaurantId         : String,
     tableNumber          : Number,
     finished             : Boolean,
+    orderTotal           : Number,
     time                 : Date,
     orders               : [{
         foodId           : mongoose.Schema.Types.ObjectId,
         buyers           : Array
         
-    }]
+    }],
+    stripeChargeId       : Number
 });
 
 
 
+PartySchema.statics.grabParty = function(partyId) {
+  return Party.findOne({_id: partyId})
+    .exec();
+};
+
+const Party = mongoose.model('Party', PartySchema);
+
 // create the model for parties and expose it to our app
-module.exports = mongoose.model('Party', PartySchema);
+module.exports = Party;

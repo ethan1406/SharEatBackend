@@ -288,13 +288,13 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
                     }
                     else
                     {
-                        console.log('here');
                         var newParty = new Party(); 
                         newParty.members.push(req.user._id);
                         newParty.restaurantId = req.params.restaurantId;
                         newParty.finished = false;
                         newParty.tableNumber = req.params.tableNumber;
                         newParty.time = Date.now();
+                        newParty.orderTotal = 10;
                         newParty.save((err) => {
                             if(err)
                             {
@@ -370,7 +370,6 @@ server.get('/merchant/dashboard', (req,res) => {
 
 server.get('/merchant/authorize', (req,res) => {
     //Generate a random string as state to protect from CSRF and place it in the session.
-    console.log("asdfsafdas");
     req.session.state = Math.random().toString(36).slice(2);
     // Prepare the mandatory Stripe parameters.
     let parameters = {
@@ -399,7 +398,6 @@ server.get('/merchant/authorize', (req,res) => {
  */
 server.get('/merchant/token', async (req, res) => {
     // Check the state we got back equals the one we generated before proceeding.
-    console.log("dkasflkasdlkfnadlskfdjas");
     if (req.session.state != req.query.state) {
         res.redirect('/merchant/dashboard');
     }
@@ -413,7 +411,6 @@ server.get('/merchant/token', async (req, res) => {
         },
             json: true
     }, (err, response, body) => {
-        console.log("body");
         console.log(body);
         if (err || body.error) {
           console.log('The Stripe onboarding process has not succeeded.');
@@ -423,7 +420,6 @@ server.get('/merchant/token', async (req, res) => {
             Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, (err, merchant) => {
                 merchant.stripeAccountId = body.stripe_user_id;
                 merchant.save();
-                console.log("dkasflkasdlkfnadlskfdjas3");
             });
         }
         // Redirect to the final stage.
@@ -451,6 +447,50 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
     } catch (err) {
         res.sendStatus(500);
         next(`Error creating ephemeral key for customer: ${err.message}`);
+    }
+});
+
+
+
+/**
+ * POST /party
+ *
+ * Create a new ride with the corresponding parameters.
+ */
+server.post('/party/charge', async (req, res, next) => {
+
+    const {source, partyId} = req.body;
+    console.log(source);
+    console.log(partyId);
+  //const { source, amount, currency } = req.body;
+    try {
+        const party = await Party.findOne({_id: partyId}).exec();
+        const restaurant = await Merchant.findOne({_id: party.restaurantId}).exec();
+        const charge = await stripe.charges.create({
+            source: source,
+            amount: party.orderTotal,
+            currency: 'usd',
+            customer: party.members[0],
+            description: `charged ${party.members[0]} on behalf of ${restaurant.name}`,
+            statement_descriptor: 'shareat',
+            destination: {
+                amount: party.orderTotal * 0.2,
+                account: restaurant.stripeAccountId
+            }
+        });
+        console.log("sup4");
+        party.finished = true;
+        party.stripeChargeId = charge.id;
+        party.saved();
+
+        res.send({
+            orders: party.orders
+        });
+        
+
+    } catch(err) {
+        res.sendStatus(500);
+        next(`Error adding token to customer: ${err.message}`);
     }
 });
 
