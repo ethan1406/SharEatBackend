@@ -314,47 +314,95 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 
 
 
-server.post('/order/:partyId/:foodId', (req, res) => {
+server.post('/order/:partyId/:foodId', async (req, res, next) => {
     
-    Party.findOne({_id: req.params.partyId}, 'orders', (err, orders) => {
-        if(err)
-        {
-            console.log('failed to add a new order to the party: " ' + err);
-        }
-        orders.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
-        orders.save((err, order) =>{
+    try {
+        const party = await Party.findOne({_id: req.params.partyId}).exec();
+        const restaurant = await Merchant.findOne({_id: party.restaurantId}, 'menu').exec();
+        var price = 0;
+        Object.entries(restaurant.menu).forEach(([category, items]) => {
+            items.forEach(item => {
+                if (item.foodId == req.params.foodId) {
+                    price = item.price;
+                }
+            });
+        });
+        party.orderTotal += price;
+        party.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
+        
+        party.save((err, order) =>{
             if(err)
             {
-                console.log('failed to add a new order to the orders: " ' + err);
+                res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
+                next(`failed to add a new order to the orders: ${err.message}`);
             }
             const orderId = order._id;
             return res.send({ status : 0, orderId});
         });
-    });
+
+    } catch (err) {
+        res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
+        next(`failed to add a new order to the orders: ${err.message}`);
+
+    }
+
+
+
+    // Party.findOne({_id: req.params.partyId}, 'orders', (err, party) => {
+    //     if(err)
+    //     {
+    //         res.status(500).send(`failed to add a new order to the party:  ${err.message}`);
+    //         next(`failed to add a new order to the party:  ${err.message}`);
+    //     }
+    //     const party = await Party.findOne({_id: partyId}).exec();
+
+    //     party.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
+    //     party.save((err, order) =>{
+    //         if(err)
+    //         {
+    //             res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
+    //             next(`failed to add a new order to the orders: ${err.message}`);
+    //         }
+    //         const orderId = order._id;
+    //         return res.send({ status : 0, orderId});
+    //     });
+    // });
 
 });
 
 
-// creating an ephemeral key for Stripe
-// server.post('/order/ephemeral_keys', async (req, res) => {
-//  const apiVersion = req.body['api_version'];
-//  try {
-//      // Find the latest passenger (see note above).
-//      const passenger = await Passenger.getLatest();
-//      // Create ephemeral key for customer.
-//      const ephemeralKey = await stripe.ephemeralKeys.create({
-//      customer: passenger.stripeCustomerId
-//  }, {
-//      stripe_version: apiVersion
-//  });
-//  // Respond with ephemeral key.
-//      res.send(ephemeralKey);
-//  } catch (err) {
-//      res.sendStatus(500);
-//      next(`Error creating ephemeral key for customer: ${err.message}`);
-//  }
-// });
 
+server.post('/order/split/:partyId/:orderId', async (req, res, next) => {
+    
+    try {
+        const party = await Party.findOne({_id: req.params.partyId}, 'orders').exec();
+        party.orders.forEach((order)=> {
+            if(order._id == req.params.orderId) {
+                //check if the user is already one of the buyers
+                var isBuyer = false;
+                order.buyers.forEach((buyerId) => {
+                    if(buyerId.equals(req.user._id)) {
+                        isBuyer = true;
+                    }
+                });
+                if(!isBuyer) {
+                    order.buyers.push(req.user._id);
+                    party.save();
+                    res.sendStatus(200);
+                } else {
+                    res.status(500).send('user is already one of the buyers');
+                }
+            }
+        });
+
+    } catch (err) {
+        res.status(500).send(`failed to split the order for the user: ${err.message}`);
+        next(`failed to split the order for the user: ${err.message}`);
+    }
+});
+
+
+//localhost:8080/order/split/5b74843071e0c8949999a808/5b7486b03cb45c9524de9065
 
 
 
