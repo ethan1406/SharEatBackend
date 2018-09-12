@@ -136,11 +136,11 @@ server.post('/login', (req, res, next) => {
         if(!user)
         {
             req.session.message = info.message;
-            return res.send({ status: -1, message: info.message });
+            return res.status(401).json({error : info.message});
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.send({ status : 0 });
+            return res.status(200).json({email:req.user.email});
         });
     })(req, res, next);
 });
