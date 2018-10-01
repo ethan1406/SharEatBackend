@@ -110,11 +110,11 @@ server.post('/signup', (req, res, next) => {
         if(!user)
         {
             req.session.message = info.message;
-            return res.send({ status: -1, message: info.message });
+            return res.status(401).json({error : info.message});
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.send({ status : 0 });
+            return res.sendStatus(200);
         });
     })(req, res, next);
 });
@@ -218,7 +218,7 @@ server.get('/map/findclosest', (req, res) =>
         }
 
 
-        res.json(closestMerchants);
+        res.status(200).json(closestMerchants);
 
     });
     
@@ -540,6 +540,21 @@ server.post('/party/charge', async (req, res, next) => {
         res.sendStatus(500);
         next(`Error adding token to customer: ${err.message}`);
     }
+});
+
+
+
+/*
+================================================
+================================================
+FUNCTIONS for Square POS system
+*/
+server.post('/square', (req,res) => {
+	res.send('OK');
+
+	const data = req.body;
+	console.log(data);
+
 });
 
 

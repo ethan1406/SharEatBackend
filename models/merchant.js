@@ -12,6 +12,7 @@ const MerchantSchema = mongoose.Schema({
     name_lower           : String,
     //password         : String,
     profilepic           : String,
+    address              : String,
     location             : {
         longitude        : Number,
         latitude         : Number
