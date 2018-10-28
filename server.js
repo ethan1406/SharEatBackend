@@ -248,6 +248,27 @@ import Party from './models/party';
 
 */
 // join a table at a restaurant
+server.get('/party/:restaurantId/:tableNumber', (req, res) => {
+    return Party.grabPartyByResIdandTableNum(req.params.restaurantId, req.params.tableNumber)
+        .then((party) => {
+                if(!party){
+                    res.status(400).send('No party is found');
+                } else {
+                    res.status(200).send(party);
+                }
+            }
+        )
+        .catch((err) => {
+                console.log(err);
+                res.status(500).send(`Internal error from Mongoose: ${err.message}`);
+            }           
+        );
+
+});
+
+
+
+
 server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
 
     if(!req.user)

@@ -25,6 +25,11 @@ PartySchema.statics.grabParty = function(partyId) {
     .exec();
 };
 
+PartySchema.statics.grabPartyByResIdandTableNum = function(restaurantId, tableNum) {
+  return Party.findOne({restaurantId: restaurantId, tableNumber: tableNum})
+    .exec();
+};
+
 const Party = mongoose.model('Party', PartySchema);
 
 // create the model for parties and expose it to our app
