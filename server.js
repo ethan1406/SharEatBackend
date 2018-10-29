@@ -252,7 +252,7 @@ server.get('/party/:restaurantId/:tableNumber', (req, res) => {
     return Party.grabPartyByResIdandTableNum(req.params.restaurantId, req.params.tableNumber)
         .then((party) => {
                 if(!party){
-                    res.status(400).send('No party is found');
+                    res.status(404).send('No party is found');
                 } else {
                     res.status(200).send(party);
                 }
