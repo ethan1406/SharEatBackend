@@ -122,7 +122,7 @@ server.post('/signup', (req, res, next) => {
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.sendStatus(200);
+            return res.sendStatus(200).json({email:req.user.email, id:req.user.id});
         });
     })(req, res, next);
 });
@@ -148,7 +148,7 @@ server.post('/login', (req, res, next) => {
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email});
+            return res.status(200).json({email:req.user.email, id:req.user.id});
         });
     })(req, res, next);
 });
@@ -416,16 +416,20 @@ server.post('/order/split', async (req, res, next) => {
                 });
 
                 if(!isBuyer) {
-                    order.buyers.push({name: 'Ethan Chang', id: req.user._id});
+                    order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
                     party.save();
                     pusher.trigger(req.query.partyId, 'splitting', {
-                      'message': 'hello world'
+                      'orderId': req.query.orderId,
+                      'name': 'Ethan Chang'
                     });
                     return res.sendStatus(200);
                 } else {
 
-                    order.buyers.push({name: 'Ethan Chang', id: req.user._id});
+                    order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
                     party.save();
+                    pusher.trigger(req.query.partyId, 'splitting', {
+                      'message': 'hello world'
+                    });
                     return res.status(200).send('user is already one of the buyers');
                     //res.status(500).send('user is already one of the buyers');
                 }
@@ -545,8 +549,6 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 server.post('/party/charge', async (req, res, next) => {
 
     const {source, partyId} = req.body;
-    console.log(source);
-    console.log(partyId);
   //const { source, amount, currency } = req.body;
     try {
         const party = await Party.findOne({_id: partyId}).exec();
@@ -563,7 +565,6 @@ server.post('/party/charge', async (req, res, next) => {
                 account: restaurant.stripeAccountId
             }
         });
-        console.log("sup4");
         party.finished = true;
         party.stripeChargeId = charge.id;
         party.saved();
