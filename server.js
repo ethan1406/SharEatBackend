@@ -9,6 +9,7 @@ import bodyParser from 'body-parser';
 //import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
+
 //handling subdomains
 import vhost from 'vhost';
 import subdomain from './routes/api';
@@ -72,7 +73,14 @@ server.use(passport.session());
 server.set('view engine', 'ejs');
 server.use(express.static('public'));
 
-
+var Pusher = require('pusher');
+var pusher = new Pusher({
+  appId: '646223',
+  key: '96771d53b6966f07b9f3',
+  secret: '0175682d7deff09c6ea6',
+  cluster: 'us2',
+  encrypted: true
+});
 
 // Authenticaiton APIs
 
@@ -358,7 +366,7 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
                 next(`failed to add a new order to the orders: ${err.message}`);
             }
             const orderId = order._id;
-            return res.send({ status : 0, orderId});
+            return res.status(500).send({orderId});
         });
 
     } catch (err) {
@@ -393,25 +401,33 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
 
 
 
-server.post('/order/split/:partyId/:orderId', async (req, res, next) => {
+server.post('/order/split', async (req, res, next) => {
     
     try {
-        const party = await Party.findOne({_id: req.params.partyId}, 'orders').exec();
+        const party = await Party.findOne({_id: req.query.partyId}, 'orders').exec();
         party.orders.forEach((order)=> {
-            if(order._id == req.params.orderId) {
+            if(order._id == req.query.orderId) {
                 //check if the user is already one of the buyers
                 var isBuyer = false;
-                order.buyers.forEach((buyerId) => {
-                    if(buyerId.equals(req.user._id)) {
+                order.buyers.forEach((buyer) => {
+                    if(buyer.id.equals(req.user._id)) {
                         isBuyer = true;
                     }
                 });
+
                 if(!isBuyer) {
-                    order.buyers.push(req.user._id);
+                    order.buyers.push({name: 'Ethan Chang', id: req.user._id});
                     party.save();
-                    res.sendStatus(200);
+                    pusher.trigger(req.query.partyId, 'splitting', {
+                      'message': 'hello world'
+                    });
+                    return res.sendStatus(200);
                 } else {
-                    res.status(500).send('user is already one of the buyers');
+
+                    order.buyers.push({name: 'Ethan Chang', id: req.user._id});
+                    party.save();
+                    return res.status(200).send('user is already one of the buyers');
+                    //res.status(500).send('user is already one of the buyers');
                 }
             }
         });
@@ -571,10 +587,10 @@ server.post('/party/charge', async (req, res, next) => {
 FUNCTIONS for Square POS system
 */
 server.post('/square', (req,res) => {
-	res.send('OK');
+    res.send('OK');
 
-	const data = req.body;
-	console.log(data);
+    const data = req.body;
+    console.log(data);
 
 });
 
