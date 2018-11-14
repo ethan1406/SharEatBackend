@@ -404,13 +404,13 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
 server.post('/order/split', async (req, res, next) => {
     
     try {
-        const party = await Party.findOne({_id: req.query.partyId}, 'orders').exec();
+        const party = await Party.findOne({_id: req.body.partyId}, 'orders').exec();
         party.orders.forEach((order)=> {
-            if(order._id == req.query.orderId) {
+            if(order._id == req.body.orderId) {
                 //check if the user is already one of the buyers
                 var isBuyer = false;
                 order.buyers.forEach((buyer) => {
-                    if(buyer.id.equals(req.user._id)) {
+                    if(buyer.id.toString() === req.user._id.toString()) {
                         isBuyer = true;
                     }
                 });
@@ -418,8 +418,8 @@ server.post('/order/split', async (req, res, next) => {
                 if(!isBuyer) {
                     order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
                     party.save();
-                    pusher.trigger(req.query.partyId, 'splitting', {
-                      'orderId': req.query.orderId,
+                    pusher.trigger(req.body.partyId, 'splitting', {
+                      'orderId': req.body.orderId,
                       'name': 'Ethan Chang'
                     });
                     return res.sendStatus(200);
@@ -427,7 +427,7 @@ server.post('/order/split', async (req, res, next) => {
 
                     order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
                     party.save();
-                    pusher.trigger(req.query.partyId, 'splitting', {
+                    pusher.trigger(req.body.partyId, 'splitting', {
                       'message': 'hello world'
                     });
                     return res.status(200).send('user is already one of the buyers');
