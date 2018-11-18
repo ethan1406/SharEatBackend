@@ -15,6 +15,10 @@ var User       = require('../models/user');
 var configAuth = require('./auth');
 const stripe = require('stripe')(configAuth.stripe.secretKey);
 
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
+}
 
 module.exports = async function(passport) {
 
@@ -62,6 +66,10 @@ module.exports = async function(passport) {
                 return done(null, false, {message: 'That email is already taken.'});
             } else 
             {
+                if(validateEmail(email)) {
+                    return done(null, false, {message: 'email must be valid'});
+                }
+
                 if(password.length <= 7)
                 {
                    return done(null, false, {message: 'Password must be longer than 7 letters.'});
