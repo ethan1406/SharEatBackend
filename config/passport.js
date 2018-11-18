@@ -16,7 +16,7 @@ var configAuth = require('./auth');
 const stripe = require('stripe')(configAuth.stripe.secretKey);
 
 function validateEmail(email) {
-  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  var re = /\S+@\S+\.\S+/;
   return re.test(email);
 }
 
@@ -66,7 +66,7 @@ module.exports = async function(passport) {
                 return done(null, false, {message: 'That email is already taken.'});
             } else 
             {
-                if(validateEmail(email)) {
+                if(!validateEmail(email)) {
                     return done(null, false, {message: 'email must be valid'});
                 }
 

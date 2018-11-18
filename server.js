@@ -122,7 +122,7 @@ server.post('/signup', (req, res, next) => {
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.sendStatus(200).json({email:req.user.email, id:req.user.id, 
+            return res.status(200).json({email:req.user.email, id:req.user.id, 
                 firstName: req.user.firstName, lastName: req.user.lastName});
         });
     })(req, res, next);
