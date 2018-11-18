@@ -41,7 +41,8 @@ module.exports = async function(passport) {
     },
     async function(req, email, password, done) 
     {
-
+        const firstName = req.body.firstName;
+        const lastName = req.body.lastName;
         // asynchronous
         // User.findOne wont fire unless data is sent back
         password = password.trim();
@@ -94,6 +95,8 @@ module.exports = async function(passport) {
                 // set the user's local credentials
                 newUser.email    = email;
                 newUser.password = newUser.generateHash(password);
+                newUser.firstName = firstName;
+                newUser.lastName = lastName;
 
                 
                 // Create a Stripe account for the user

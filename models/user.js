@@ -11,7 +11,8 @@ var UserSchema = mongoose.Schema({
         token        : String,
     },
     email        	 : String,
-    name         	 : String,
+    firstName        : String,
+    lastName         : String,
     password         : String,
     profilepic       : String,
     pastOrders       : [{

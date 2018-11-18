@@ -98,15 +98,15 @@ server.get('/auth/facebook/callback',
 
 
 
-server.get('/signup', function(req, res) {
+// server.get('/signup', function(req, res) {
 
-        // render the page and pass in any flash data if it exists
-        res.render('signup.ejs', { message: req.flash('signupMessage') });
-    });
+//         // render the page and pass in any flash data if it exists
+//         res.render('signup.ejs', { message: req.flash('signupMessage') });
+//     });
 
-server.get('/login', (req,res)=> {
-    res.render('login.ejs', { message: req.flash('loginMessage') });
-});
+// server.get('/login', (req,res)=> {
+//     res.render('login.ejs', { message: req.flash('loginMessage') });
+// });
 
 
 server.post('/signup', (req, res, next) => {
@@ -122,7 +122,8 @@ server.post('/signup', (req, res, next) => {
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.sendStatus(200).json({email:req.user.email, id:req.user.id});
+            return res.sendStatus(200).json({email:req.user.email, id:req.user.id, 
+                firstName: req.user.firstName, lastName: req.user.lastName});
         });
     })(req, res, next);
 });
@@ -148,7 +149,8 @@ server.post('/login', (req, res, next) => {
         }
         req.logIn(user, function(err) {
             if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id});
+            return res.status(200).json({email:req.user.email, id:req.user.id, 
+                firstName: req.user.firstName, lastName: req.user.lastName});
         });
     })(req, res, next);
 });
