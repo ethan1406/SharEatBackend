@@ -234,6 +234,20 @@ server.get('/map/findclosest', (req, res) =>
     
 });
 
+server.get('/map/allRestaurants', (req, res) =>
+{
+    Merchant.find({}, (err, merchants) => {
+        if(err)
+        {
+            console.log(err);
+        }
+
+        res.status(200).json(merchants);
+
+    });
+    
+});
+
 //return menu based on restaurant id
 server.get('/menu/:restaurantId', (req, res)=> {
 
