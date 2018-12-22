@@ -402,37 +402,53 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
 });
 
 
-
 server.post('/order/split', async (req, res, next) => {
-    
     try {
         const party = await Party.findOne({_id: req.body.partyId}, 'orders').exec();
         party.orders.forEach((order)=> {
             if(order._id == req.body.orderId) {
                 //check if the user is already one of the buyers
                 var isBuyer = false;
+                var index = -1;
+                var count = 0;
                 order.buyers.forEach((buyer) => {
-                    if(buyer.id.toString() === req.user._id.toString()) {
+                    if(buyer.userId.toString() === req.user._id.toString()) {
                         isBuyer = true;
+                        index = count;
+
                     }
+                    count++;
                 });
 
                 if(!isBuyer) {
-                    order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
-                    party.save();
-                    pusher.trigger(req.body.partyId, 'splitting', {
-                      'orderId': req.body.orderId,
-                      'name': 'Ethan Chang'
+                    order.buyers.push({firstName: req.user.firstName, lastName: req.user.lastName, userId: req.user._id});
+                    party.save(err => {
+                        if(err) {
+                            next(err.message);
+                        }
+                        pusher.trigger(req.body.partyId, 'splitting', {
+                          'add': true,
+                          'orderId': req.body.orderId,
+                          'firstName': req.user.firstName,
+                          'lastName': req.user.lastName,
+                          'userId': req.user._id,
+                          'colorIndex': order.buyers.length - 1
+                        });
+                        return res.sendStatus(200);
                     });
-                    return res.sendStatus(200);
                 } else {
-
-                    order.buyers.push({name: 'Ethan Chang', userId: req.user._id});
-                    party.save();
-                    pusher.trigger(req.body.partyId, 'splitting', {
-                      'message': 'hello world'
+                    order.buyers.splice(index, 1);
+                    party.save(err => {
+                        if(err) {
+                            next(err.message);
+                        }
+                        pusher.trigger(req.body.partyId, 'splitting', {
+                          'add': false,
+                          'orderId': req.body.orderId,
+                          'userId': req.user._id
+                        });
+                        return res.status(200).send('user is already one of the buyers');
                     });
-                    return res.status(200).send('user is already one of the buyers');
                     //res.status(500).send('user is already one of the buyers');
                 }
             }

@@ -12,7 +12,7 @@ var PartySchema = mongoose.Schema({
     time                 : Date,
     orders               : [{
         foodId           : mongoose.Schema.Types.ObjectId,
-        buyers           : [{name: String, userId: mongoose.Schema.Types.ObjectId}]
+        buyers           : [{firstName: String, lastName: String, userId: mongoose.Schema.Types.ObjectId}]
         
     }],
     stripeChargeId       : Number
