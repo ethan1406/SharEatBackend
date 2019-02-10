@@ -16,6 +16,7 @@ import subdomain from './routes/api';
 import configAuth from './config/auth';
 import querystring from 'querystring';
 
+import User from './models/user';
 //aws s3
 // import AWS from 'aws-sdk';
 // const s3 = new AWS.S3();
@@ -123,7 +124,8 @@ server.post('/signup', (req, res, next) => {
         req.logIn(user, function(err) {
             if (err) { return next(err); }
             return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName});
+                firstName: req.user.firstName, lastName: req.user.lastName, 
+                loyaltyPoints: req.user.loyaltyPoints});
         });
     })(req, res, next);
 });
@@ -150,10 +152,13 @@ server.post('/login', (req, res, next) => {
         req.logIn(user, function(err) {
             if (err) { return next(err); }
             return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName});
+                firstName: req.user.firstName, lastName: req.user.lastName, 
+                loyaltyPoints: req.user.loyaltyPoints});
         });
     })(req, res, next);
 });
+
+
 
 
 // server.post('/login', passport.authenticate('local-login', {
@@ -357,8 +362,6 @@ server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
     }
 });
 
-
-
 server.post('/order/:partyId/:foodId', async (req, res, next) => {
     
     try {
@@ -480,6 +483,58 @@ server.post('/order/split', async (req, res, next) => {
 
 
 const stripe = require('stripe')(configAuth.stripe.secretKey);
+
+
+server.post('/user/addPayment', async (req, res) => {
+    try {
+        const card = await stripe.customers.createSource(
+            req.user.stripeCustomerId,
+            {source: req.body.tokenId}
+        );
+
+        if (card) {
+            await stripe.customers.update(req.user.stripeCustomerId, {
+              default_source: card.id
+            });
+        }
+        
+    } catch (err) {
+        console.log(`could not create or update source: ${err.message}`);
+        res.sendStatus(500);
+    }
+
+    res.sendStatus(200);
+
+});
+
+
+server.post('/user/changeDefaultPayment', async (req, res) => {
+    try {
+        await stripe.customers.update(req.user.stripeCustomerId, {
+          default_source: req.body.cardId
+        });
+    } catch (err) {
+        console.log(`could not update source: ${err.message}`);
+        res.sendStatus(500);
+    }
+
+    res.sendStatus(200);
+});
+
+server.get('/user/listCards', async (req, res) => {
+    try {
+        const cards = await stripe.customers.listCards(req.user.stripeCustomerId);
+
+        if (cards) {
+            res.status(200).json(cards);
+        }
+        
+    } catch (err) {
+        console.log(`could not retrieve the list of cards for the user: ${err.message}`);
+        res.sendStatus(500);
+    }
+
+});
 
 
 server.get('/merchant/dashboard', (req,res) => {

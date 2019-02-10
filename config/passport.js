@@ -101,19 +101,18 @@ module.exports = async function(passport) {
                 // create the user
                 var newUser            = new User();
                 // set the user's local credentials
-                newUser.email    = email;
+                newUser.email    = email.toLowerCase();
                 newUser.password = newUser.generateHash(password);
                 newUser.firstName = firstName;
                 newUser.lastName = lastName;
-
-                
+                    
                 // Create a Stripe account for the user
                 const customer = await stripe.customers.create({
                     email: newUser.email,
                     description: `Customer for ${newUser.email}`
                 });
                 newUser.stripeCustomerId = customer.id;
-    
+
                 // save the user
                 newUser.save(function(err) 
                 {
@@ -142,6 +141,7 @@ module.exports = async function(passport) {
         // find a user whose email is the same as the forms email
         // we are checking to see if the user trying to login already exists
         password = password.trim();
+        email = email.toLowerCase();
         User.findOne({ 'email' :  email }, function(err, user) {
             // if there are any errors, return the error before anything else
             if (err)
