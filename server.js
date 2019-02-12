@@ -478,9 +478,7 @@ server.post('/order/split', async (req, res, next) => {
 });
 
 
-//localhost:8080/order/split/5b74843071e0c8949999a808/5b7486b03cb45c9524de9065
-
-
+//Stripe related API endpoints
 
 const stripe = require('stripe')(configAuth.stripe.secretKey);
 
@@ -521,6 +519,7 @@ server.post('/user/changeDefaultPayment', async (req, res) => {
     res.sendStatus(200);
 });
 
+
 server.get('/user/listCards', async (req, res) => {
     try {
         const cards = await stripe.customers.listCards(req.user.stripeCustomerId);
@@ -535,6 +534,7 @@ server.get('/user/listCards', async (req, res) => {
     }
 
 });
+
 
 
 server.get('/merchant/dashboard', (req,res) => {
@@ -628,11 +628,34 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 
 
 
-/**
- * POST /party
- *
- * Create a new ride with the corresponding parameters.
- */
+//create charges
+server.post('/user/makePayment', async (req, res, next) => {
+
+    const {amount, restaurantId} = req.body;
+
+    try {
+        const merchant = await Merchant.findOne({_id: restaurantId}).exec();
+        const customer = await stripe.customers.retrieve(req.user.stripeCustomerId);
+        const charge = await stripe.charges.create({
+                                  amount: amount,
+                                  currency: 'usd',
+                                  customer: req.user.stripeCustomerId,
+                                  source: customer.default_source.id,
+                                  destination: {
+                                    account: merchant.stripeAccountId,
+                                  },
+                                  description: 'Test payment',
+                             });
+        res.status(200).json(charge);
+
+    } catch (err) {
+        res.sendStatus(500);
+        next(`Error charging a customer: ${err.message}`);
+    }
+
+});
+
+
 server.post('/party/charge', async (req, res, next) => {
 
     const {source, partyId} = req.body;
@@ -669,21 +692,6 @@ server.post('/party/charge', async (req, res, next) => {
 
 
 
-/*
-================================================
-================================================
-FUNCTIONS for Square POS system
-*/
-server.post('/square', (req,res) => {
-    res.send('OK');
-
-    const data = req.body;
-    console.log(data);
-
-});
-
-
-
 
     
 
@@ -703,21 +711,11 @@ server.post('/mer', async (req, res) =>
 });
 
 
-server.get('/test', (req, res) =>
-{
-    res.send('sup');
-});
-
 server.get('/user', (req, res) =>
 {
     res.send(req.user);
 });
 
-
-
-server.get('/loginsuccess', (req,res)=> {
-    res.send('youre logged in');
-});
 
 /*
 ================================================
