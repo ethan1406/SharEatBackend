@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 // define the schema for our party model
 var PartySchema = mongoose.Schema({
-    members        	     : Array,
+    members        	     : [{userId: String, count: Number}],
     restaurantId         : String,
     tableNumber          : Number,
     finished             : Boolean,

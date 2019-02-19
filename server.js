@@ -17,6 +17,7 @@ import configAuth from './config/auth';
 import querystring from 'querystring';
 
 import User from './models/user';
+import Party from './models/party';
 //aws s3
 // import AWS from 'aws-sdk';
 // const s3 = new AWS.S3();
@@ -171,15 +172,16 @@ server.post('/login', (req, res, next) => {
 import Merchant from './models/merchant';
 
 
-server.get('/map/find', (req, res) =>
+server.get('/map/find', async (req, res) =>
 {
-    var name = req.query.name.toLowerCase();
-    var query = Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10);
-
-    query.exec((err, merchants) =>
-    {
-        res.json(merchants);
-    });
+    try {
+        var name = req.query.name.toLowerCase();
+        const merchants = await Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10).exec();
+        res.status(200).json(merchants);
+    } catch (err) {
+        console.log(err.message);
+        res.sendStatus(500);
+    }
 });
 
 
@@ -271,7 +273,7 @@ server.get('/menu/:restaurantId', (req, res)=> {
 
 
 
-import Party from './models/party';
+
 /*
     Table Logic
 
@@ -421,7 +423,7 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
 
 server.post('/order/split', async (req, res, next) => {
     try {
-        const party = await Party.findOne({_id: req.body.partyId}, 'orders').exec();
+        var party = await Party.findOne({_id: req.body.partyId}, ['orders','members']).exec();
         party.orders.forEach((order)=> {
             if(order._id == req.body.orderId) {
                 //check if the user is already one of the buyers
@@ -432,29 +434,53 @@ server.post('/order/split', async (req, res, next) => {
                     if(buyer.userId.toString() === req.user._id.toString()) {
                         isBuyer = true;
                         index = count;
-
                     }
                     count++;
                 });
 
                 if(!isBuyer) {
                     order.buyers.push({firstName: req.user.firstName, lastName: req.user.lastName, userId: req.user._id});
+                    
+                    // check if the user is already a member of the party
+                    var isMember = false;
+                    var indexOfMember = -1;
+                    party.members.forEach((member, index) =>{
+                        if(member.userId.toString() === req.user._id.toString()) {
+                            isMember = true;
+                            indexOfMember = index;
+                        }
+                    });
+
+                    if(!isMember) {
+                        party.members.push({userId: req.user._id, count: 1});
+                    } else {
+                        party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
+                    }
+
+                    
                     party.save(err => {
                         if(err) {
                             next(err.message);
                         }
                         pusher.trigger(req.body.partyId, 'splitting', {
                           'add': true,
+                          'isMember': isMember,
                           'orderId': req.body.orderId,
                           'firstName': req.user.firstName,
                           'lastName': req.user.lastName,
-                          'userId': req.user._id,
-                          'colorIndex': order.buyers.length - 1
+                          'userId': req.user._id
                         });
                         return res.sendStatus(200);
                     });
                 } else {
                     order.buyers.splice(index, 1);
+                    // const indexToRemove = party.members.indexOf(req.user._id);
+                    // party.members.splice(indexToRemove, 1);
+                    party.members.forEach(member => {
+                            if(member.userId.toString() === req.user._id.toString()) {
+                                member.count --;
+                            }
+                        });
                     party.save(err => {
                         if(err) {
                             next(err.message);
@@ -639,17 +665,17 @@ server.post('/user/makePayment', async (req, res, next) => {
         const charge = await stripe.charges.create({
                                   amount: amount,
                                   currency: 'usd',
+                                  description: 'Example charge',
                                   customer: req.user.stripeCustomerId,
                                   source: customer.default_source.id,
                                   destination: {
                                     account: merchant.stripeAccountId,
-                                  },
-                                  description: 'Test payment',
+                                  }
                              });
         res.status(200).json(charge);
 
     } catch (err) {
-        res.sendStatus(500);
+        res.status(500).json(err.message);
         next(`Error charging a customer: ${err.message}`);
     }
 
