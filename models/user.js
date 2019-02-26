@@ -17,8 +17,7 @@ var UserSchema = mongoose.Schema({
     profilepic       : String,
     pastOrders       : [{
         time         : Date,
-        partyId      : String,
-        orders       : Array
+        partyId      : String
     }],
     friends          : Array,
     loyaltyPoints    : Array,

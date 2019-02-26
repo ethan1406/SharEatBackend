@@ -172,10 +172,21 @@ server.post('/login', (req, res, next) => {
 import Merchant from './models/merchant';
 
 
+server.get('/getMerchantInfo', async (req, res) => {
+    try {
+        const restaurantId = req.query.restaurantId;
+        const merchant = await Merchant.findOne({_id: restaurantId}, ['-__v','-stripeAccountId']).exec();
+        res.status(200).json(merchant);
+    } catch(err) {
+        console.log(`error when getting merchant info: ${err.message}`);
+        res.sendStatus(500);
+    }
+});
+
 server.get('/map/find', async (req, res) =>
 {
     try {
-        var name = req.query.name.toLowerCase();
+        const name = req.query.name.toLowerCase();
         const merchants = await Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10).exec();
         res.status(200).json(merchants);
     } catch (err) {
@@ -269,9 +280,6 @@ server.get('/menu/:restaurantId', (req, res)=> {
     });
 
 });
-
-
-
 
 
 /*
@@ -439,7 +447,8 @@ server.post('/order/split', async (req, res, next) => {
                 });
 
                 if(!isBuyer) {
-                    order.buyers.push({firstName: req.user.firstName, lastName: req.user.lastName, userId: req.user._id});
+                    order.buyers.push({firstName: req.user.firstName, 
+                        lastName: req.user.lastName, userId: req.user._id, finished: false});
                     
                     // check if the user is already a member of the party
                     var isMember = false;
@@ -657,7 +666,7 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 //create charges
 server.post('/user/makePayment', async (req, res, next) => {
 
-    const {amount, restaurantId} = req.body;
+    const {amount, restaurantId, partyId} = req.body;
 
     try {
         const merchant = await Merchant.findOne({_id: restaurantId}).exec();
@@ -672,6 +681,8 @@ server.post('/user/makePayment', async (req, res, next) => {
                                     account: merchant.stripeAccountId,
                                   }
                              });
+        await User.findOneAndUpdate({_id: req.user._id},  { '$push': {'pastOrders': {time: new Date(), partyId: partyId}}}).exec();
+
         res.status(200).json(charge);
 
     } catch (err) {
