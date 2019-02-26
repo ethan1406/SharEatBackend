@@ -18,6 +18,8 @@ import querystring from 'querystring';
 
 import User from './models/user';
 import Party from './models/party';
+import Merchant from './models/merchant';
+
 //aws s3
 // import AWS from 'aws-sdk';
 // const s3 = new AWS.S3();
@@ -169,7 +171,25 @@ server.post('/login', (req, res, next) => {
 // }));
 
 
-import Merchant from './models/merchant';
+server.get('/user/receipts', async (req, res) => {
+    try {
+        const {pastOrders} = await User.findOne({_id: req.user._id}, 'pastOrders').exec();
+        res.status(200).json(pastOrders);
+    } catch (err) {
+        res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
+    }
+});
+
+
+server.get('/user/loyaltyPoints', async (req, res) => {
+    try {
+        const {loyaltyPoints} = await User.findOne({_id: req.user._id}, 'loyaltyPoints').exec();
+        res.status(200).json(loyaltyPoints);
+    } catch (err) {
+        res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
+    }
+});
+
 
 
 server.get('/getMerchantInfo', async (req, res) => {
@@ -666,7 +686,7 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 //create charges
 server.post('/user/makePayment', async (req, res, next) => {
 
-    const {amount, restaurantId, partyId} = req.body;
+    const {amount, points, restaurantId, partyId} = req.body;
 
     try {
         const merchant = await Merchant.findOne({_id: restaurantId}).exec();
@@ -681,8 +701,27 @@ server.post('/user/makePayment', async (req, res, next) => {
                                     account: merchant.stripeAccountId,
                                   }
                              });
-        await User.findOneAndUpdate({_id: req.user._id},  { '$push': {'pastOrders': {time: new Date(), partyId: partyId}}}).exec();
+        var user = await User.findOne({_id: req.user._id}).exec();
+        user.pastOrders.push({time: new Date(), partyId: partyId});
+        var isCustomer = false;
+        user.loyaltyPoints.forEach(loyaltyPoint => {
+            if(loyaltyPoint.restaurantId.toString() === restaurantId.toString()) {
+                isCustomer = true;
+                loyaltyPoint.points = loyaltyPoint.points + points;
+                user.markModified('loyaltyPoints');
+            }
+        });
+        
+        if(!isCustomer) {
+            const restaurant = await Merchant.findOne({_id: restaurantId}).exec();
+            user.loyaltyPoints.push({restaurantId, 
+                points: points, 
+                restaurantName: restaurant.name,
+                description: restaurant.description,
+                address: restaurant.address});
+        }
 
+        await user.save();
         res.status(200).json(charge);
 
     } catch (err) {
