@@ -307,22 +307,18 @@ server.get('/menu/:restaurantId', (req, res)=> {
 
 */
 // join a table at a restaurant
-server.get('/party/:restaurantId/:tableNumber', (req, res) => {
-    return Party.grabPartyByResIdandTableNum(req.params.restaurantId, req.params.tableNumber)
-        .then((party) => {
-                if(!party){
-                    res.status(404).send('No party is found');
-                } else {
-                    res.status(200).send(party);
-                }
-            }
-        )
-        .catch((err) => {
-                console.log(err);
-                res.status(500).send(`Internal error from Mongoose: ${err.message}`);
-            }           
-        );
-
+server.get('/party/:restaurantId/:tableNumber', async (req, res) => {
+    try {
+        const party = await Party.grabPartyByResIdandTableNum(req.params.restaurantId, req.params.tableNumber);
+        if(!party){
+            res.status(404).send('No party is found');
+        } else {
+            res.status(200).send(party);
+        }
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(`Internal error from Mongoose: ${err.message}`);
+    }
 });
 
 
@@ -481,11 +477,10 @@ server.post('/order/split', async (req, res, next) => {
                     });
 
                     if(!isMember) {
-                        party.members.push({userId: req.user._id, count: 1});
+                        party.members.push({userId: req.user._id, count: 1, tax: 0, tip: 0});
                     } else {
                         party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
                     }
-
                     
                     party.save(err => {
                         if(err) {
@@ -686,9 +681,10 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 //create charges
 server.post('/user/makePayment', async (req, res, next) => {
 
-    const {amount, points, restaurantId, partyId} = req.body;
+    const {amount, tax, tip, points, restaurantId, partyId} = req.body;
 
     try {
+        //create charge
         const merchant = await Merchant.findOne({_id: restaurantId}).exec();
         const customer = await stripe.customers.retrieve(req.user.stripeCustomerId);
         const charge = await stripe.charges.create({
@@ -701,8 +697,63 @@ server.post('/user/makePayment', async (req, res, next) => {
                                     account: merchant.stripeAccountId,
                                   }
                              });
+
+        const currentTime = new Date();
+        //push chargeId to merchant's transactions
+
+        var isTransaction = false;
+        var indexOfTransaction = -1;
+        merchant.transactions.forEach((transaction, index) => {
+            if(transaction.partyId.toString() === partyId.toString()) {
+                isTransaction = true;
+                indexOfTransaction = index;
+            }
+        });
+
+        if(!isTransaction) {
+            merchant.transactions.push({
+                 partyId: partyId,
+                    charges: [{
+                        time: currentTime,
+                        chargeId: charge.id,
+                        firstName: req.user.firstName,
+                        lastName: req.user.lastName
+                    }]
+                });
+        } else {
+            merchant.transactions[indexOfTransaction]['charges'].push({
+                time: currentTime,
+                chargeId: charge.id,
+                firstName: req.user.firstName,
+                lastName: req.user.lastName
+            });
+        }
+        merchant.markModified('transactions');
+
+
+        //update party
+        const party = await Party.findOne({_id: partyId}).exec();
+        party.members.forEach(member => {
+            if(member.userId.toString() === req.user._id.toString()) {
+                member.tax += tax;
+                member.tip += tip;
+                party.markModified('members');
+            }
+        });
+
+        party.orders.forEach(order => {
+            order.buyers.forEach(buyer => {
+                if(buyer.userId.toString() === req.user._id.toString()) {
+                    buyer.finished = true;
+                    party.markModified('orders');
+                }
+            });
+        });
+
+        //push partyId to user's pastOrders, update user's loyalty points
         var user = await User.findOne({_id: req.user._id}).exec();
-        user.pastOrders.push({time: new Date(), partyId: partyId});
+        const restaurant = await Merchant.findOne({_id: restaurantId}).exec();
+
         var isCustomer = false;
         user.loyaltyPoints.forEach(loyaltyPoint => {
             if(loyaltyPoint.restaurantId.toString() === restaurantId.toString()) {
@@ -711,9 +762,16 @@ server.post('/user/makePayment', async (req, res, next) => {
                 user.markModified('loyaltyPoints');
             }
         });
+
+        user.pastOrders.push({time: currentTime, partyId: partyId, 
+            chargeId: charge.id, 
+            restaurantId,
+            restaurantName: restaurant.name,
+            description: restaurant.description,
+            address: restaurant.address});
+
         
         if(!isCustomer) {
-            const restaurant = await Merchant.findOne({_id: restaurantId}).exec();
             user.loyaltyPoints.push({restaurantId, 
                 points: points, 
                 restaurantName: restaurant.name,
@@ -722,6 +780,8 @@ server.post('/user/makePayment', async (req, res, next) => {
         }
 
         await user.save();
+        await merchant.save();
+        await party.save();
         res.status(200).json(charge);
 
     } catch (err) {

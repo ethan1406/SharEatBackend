@@ -19,6 +19,15 @@ const MerchantSchema = mongoose.Schema({
     },
     menu                 : {
     },
+    transactions: [{
+        partyId: mongoose.Schema.Types.ObjectId,
+        charges: [{
+            time: Date,
+            chargeId: String,
+            firstName: String,
+            lastName: String
+        }]
+    }],
     description : String,
     details: String,
     // Stripe account ID to send payments obtained with Stripe Connect.

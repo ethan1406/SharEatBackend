@@ -17,10 +17,21 @@ var UserSchema = mongoose.Schema({
     profilepic       : String,
     pastOrders       : [{
         time         : Date,
-        partyId      : String
+        partyId      : mongoose.Schema.Types.ObjectId,
+        chargeId     : String,
+        restaurantName: String,
+        restaurantId: String,
+        description: String,
+        address: String,
     }],
     friends          : Array,
-    loyaltyPoints    : Array,
+    loyaltyPoints    : [{
+        restaurantId: mongoose.Schema.Types.ObjectId,
+        restaurantName: String,
+        description: String,
+        address: String,
+        points: Number
+    }],
     // Stripe customer ID storing the payment sources.
     stripeCustomerId : String
 });

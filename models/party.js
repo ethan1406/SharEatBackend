@@ -4,7 +4,12 @@ import mongoose from 'mongoose';
 
 // define the schema for our party model
 var PartySchema = mongoose.Schema({
-    members        	     : [{userId: String, count: Number}],
+    members        	     : [{
+        userId: String, 
+        count: Number,
+        tax: Number,
+        tip: Number
+    }],
     restaurantId         : String,
     tableNumber          : Number,
     finished             : Boolean,
@@ -12,7 +17,12 @@ var PartySchema = mongoose.Schema({
     time                 : Date,
     orders               : [{
         foodId           : mongoose.Schema.Types.ObjectId,
-        buyers           : [{firstName: String, lastName: String, userId: mongoose.Schema.Types.ObjectId}]
+        buyers           : [{
+            firstName: String, 
+            lastName: String, 
+            userId: mongoose.Schema.Types.ObjectId,
+            finished: Boolean
+        }]
         
     }],
     stripeChargeId       : Number
