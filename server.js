@@ -309,7 +309,11 @@ server.get('/menu/:restaurantId', (req, res)=> {
 // join a table at a restaurant
 server.get('/party/:restaurantId/:tableNumber', async (req, res) => {
     try {
-        const party = await Party.grabPartyByResIdandTableNum(req.params.restaurantId, req.params.tableNumber);
+        const party = await Party.findOne({
+            restaurantId: req.params.restaurantId, 
+            tableNumber: req.params.tableNumber,
+            finished: false
+        });
         if(!party){
             res.status(404).send('No party is found');
         } else {
@@ -321,11 +325,23 @@ server.get('/party/:restaurantId/:tableNumber', async (req, res) => {
     }
 });
 
+server.get('/party/:partyId', async (req, res, next) => {
+    try {
+        const party = await Party.findOne({_id: req.params.partyId});
+        if(!party) {
+            res.status(404).send('No party is found');
+        } else {
+            res.status(200).send(party);
+        }
+    } catch (err) {
+        res.status(500).send(`Internal error from Mongoose: ${err.message}`);
+        next(err);
+    }
+    
+});
 
 
-
-server.post('/party/:restaurantId/:tableNumber', (req, res)=> {
-
+server.post('/party/:restaurantId/:tableNumber', async (req, res, next)=> {
     if(!req.user)
     {
         console.log('user is not logged in');
