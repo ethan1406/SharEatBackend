@@ -18,7 +18,9 @@ var UserSchema = mongoose.Schema({
     pastOrders       : [{
         time         : Date,
         partyId      : mongoose.Schema.Types.ObjectId,
-        chargeId     : String,
+        chargeIds     : [String],
+        tax: Number,
+        tip: Number,
         restaurantName: String,
         restaurantId: String,
         description: String,

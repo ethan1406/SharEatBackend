@@ -468,71 +468,75 @@ server.post('/order/split', async (req, res, next) => {
             if(order._id == req.body.orderId) {
                 //check if the user is already one of the buyers
                 var isBuyer = false;
+                var isFinished = false;
                 var index = -1;
                 var count = 0;
                 order.buyers.forEach((buyer) => {
                     if(buyer.userId.toString() === req.user._id.toString()) {
+                        isFinished = buyer.finished;
                         isBuyer = true;
                         index = count;
                     }
                     count++;
                 });
-
-                if(!isBuyer) {
-                    order.buyers.push({firstName: req.user.firstName, 
-                        lastName: req.user.lastName, userId: req.user._id, finished: false});
-                    
-                    // check if the user is already a member of the party
-                    var isMember = false;
-                    var indexOfMember = -1;
-                    party.members.forEach((member, index) =>{
-                        if(member.userId.toString() === req.user._id.toString()) {
-                            isMember = true;
-                            indexOfMember = index;
-                        }
-                    });
-
-                    if(!isMember) {
-                        party.members.push({userId: req.user._id, count: 1, tax: 0, tip: 0});
-                    } else {
-                        party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
-                    }
-                    
-                    party.save(err => {
-                        if(err) {
-                            next(err.message);
-                        }
-                        pusher.trigger(req.body.partyId, 'splitting', {
-                          'add': true,
-                          'isMember': isMember,
-                          'orderId': req.body.orderId,
-                          'firstName': req.user.firstName,
-                          'lastName': req.user.lastName,
-                          'userId': req.user._id
-                        });
-                        return res.sendStatus(200);
-                    });
-                } else {
-                    order.buyers.splice(index, 1);
-                    // const indexToRemove = party.members.indexOf(req.user._id);
-                    // party.members.splice(indexToRemove, 1);
-                    party.members.forEach(member => {
+                
+                if(!isFinished) {
+                    if(!isBuyer) {
+                        order.buyers.push({firstName: req.user.firstName, 
+                            lastName: req.user.lastName, userId: req.user._id, finished: false});
+                        
+                        // check if the user is already a member of the party
+                        var isMember = false;
+                        var indexOfMember = -1;
+                        party.members.forEach((member, index) =>{
                             if(member.userId.toString() === req.user._id.toString()) {
-                                member.count --;
+                                isMember = true;
+                                indexOfMember = index;
                             }
                         });
-                    party.save(err => {
-                        if(err) {
-                            next(err.message);
+
+                        if(!isMember) {
+                            party.members.push({userId: req.user._id, count: 1, tax: 0, tip: 0});
+                        } else {
+                            party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
                         }
-                        pusher.trigger(req.body.partyId, 'splitting', {
-                          'add': false,
-                          'orderId': req.body.orderId,
-                          'userId': req.user._id
+                        
+                        party.save(err => {
+                            if(err) {
+                                next(err.message);
+                            }
+                            pusher.trigger(req.body.partyId, 'splitting', {
+                              'add': true,
+                              'isMember': isMember,
+                              'orderId': req.body.orderId,
+                              'firstName': req.user.firstName,
+                              'lastName': req.user.lastName,
+                              'userId': req.user._id
+                            });
+                            return res.sendStatus(200);
                         });
-                        return res.status(200).send('user is already one of the buyers');
-                    });
-                    //res.status(500).send('user is already one of the buyers');
+                    } else {
+                        order.buyers.splice(index, 1);
+                        // const indexToRemove = party.members.indexOf(req.user._id);
+                        // party.members.splice(indexToRemove, 1);
+                        party.members.forEach(member => {
+                                if(member.userId.toString() === req.user._id.toString()) {
+                                    member.count --;
+                                }
+                            });
+                        party.save(err => {
+                            if(err) {
+                                next(err.message);
+                            }
+                            pusher.trigger(req.body.partyId, 'splitting', {
+                              'add': false,
+                              'orderId': req.body.orderId,
+                              'userId': req.user._id
+                            });
+                            return res.status(200).send('user is already one of the buyers');
+                        });
+                        //res.status(500).send('user is already one of the buyers');
+                    }
                 }
             }
         });
@@ -749,13 +753,6 @@ server.post('/user/makePayment', async (req, res, next) => {
 
         //update party
         const party = await Party.findOne({_id: partyId}).exec();
-        party.members.forEach(member => {
-            if(member.userId.toString() === req.user._id.toString()) {
-                member.tax += tax;
-                member.tip += tip;
-                party.markModified('members');
-            }
-        });
 
         party.orders.forEach(order => {
             order.buyers.forEach(buyer => {
@@ -778,14 +775,29 @@ server.post('/user/makePayment', async (req, res, next) => {
                 user.markModified('loyaltyPoints');
             }
         });
+        
+        var isPastOrder = false;
+        user.pastOrders.forEach(order => {
+            if(order.partyId.toString() == partyId.toString()) {
+                isPastOrder = true;
+                order.chargeIds.push(charge.id);
+                order.tax += tax;
+                order.tip += tip;
+                user.markModified('pastOrders');
+            }
+        });
 
-        user.pastOrders.push({time: currentTime, partyId: partyId, 
-            chargeId: charge.id, 
+        if(!isPastOrder) {
+            user.pastOrders.push({time: currentTime, partyId: partyId, 
+            chargeIds: [charge.id], 
             restaurantId,
+            tax,
+            tip,
             restaurantName: restaurant.name,
             description: restaurant.description,
             address: restaurant.address});
-
+        }
+        
         
         if(!isCustomer) {
             user.loyaltyPoints.push({restaurantId, 
