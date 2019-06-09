@@ -673,6 +673,17 @@ server.get('/merchant/token', async (req, res) => {
     });
 });
 
+server.get('/merchant/getActiveParties', async (req, res, next) => {
+    try {
+        const merchant = await Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, 'activeParties').exec();
+        res.status(200).json(merchant);
+        
+    } catch(err) {
+        res.sendStatus(500);
+        next(`Error getting active parties for merchant: ${err.message}`);
+    }
+});
+
 /**
  * POST /api/passengers/me/ephemeral_keys
  *
