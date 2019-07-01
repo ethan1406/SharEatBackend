@@ -10,6 +10,7 @@ var LocalStrategy = require('passport-local').Strategy;
 
 // load up the user model
 var User       = require('../models/user');
+var Merchant   = require('../models/merchant');
 
 // load the auth variables
 var configAuth = require('./auth');
@@ -22,14 +23,19 @@ function validateEmail(email) {
 
 module.exports = async function(passport) {
 
-    // used to serialize the user for the session
+    // used to serialize the user for the sessionk
     passport.serializeUser(function(user, done) {
-        done(null, user.id);
+        var key = {
+            id: user.id,
+            type: user.userType
+        };
+        done(null, key);
     });
 
     // used to deserialize the user
-    passport.deserializeUser(function(id, done) {
-        User.findById(id, function(err, user) {
+    passport.deserializeUser(function(key, done) {
+        var Model = key.type === 'User' ? User : Merchant; 
+        Model.findById({_id: key.id}, function(err, user) {
             done(err, user);
         });
     });
@@ -103,6 +109,7 @@ module.exports = async function(passport) {
                 // set the user's local credentials
                 newUser.email    = email.toLowerCase();
                 newUser.password = newUser.generateHash(password);
+                newUser.userType = 'User';
                 newUser.firstName = firstName;
                 newUser.lastName = lastName;
                     
@@ -120,6 +127,86 @@ module.exports = async function(passport) {
                         throw err;
                     }
                     return done(null, newUser);
+                });
+            }
+
+        });    
+
+        });
+
+    }));
+
+    // code for merchant sign up
+    passport.use('merchant-signup', new LocalStrategy(
+    {
+        usernameField : 'email',
+        passwordField : 'password',
+        passReqToCallback : true 
+    },
+    async function(req, email, password, done) 
+    {
+        const name = req.body.name;
+
+        password = password.trim();
+        process.nextTick(async function() 
+        {
+
+        Merchant.findOne({ 'email' :  email }, async function(err, user) {
+            // if there are any errors, return the error
+            if (err)
+                return done(err);
+
+            // check to see if theres already a user with that email
+            if (user) 
+            {
+                return done(null, false, {message: 'That email is already taken.'});
+            } else 
+            {
+                if(!validateEmail(email)) {
+                    return done(null, false, {message: 'email must be valid'});
+                }
+
+                if(password.length <= 7)
+                {
+                   return done(null, false, {message: 'Password must be longer than 7 letters.'});
+                }
+                var letterNum = 0;
+                var numNum = 0;
+                for(var i = 0; i < password.length ; i++)
+                {
+                    if(password[i] >= '0' && password[i] <= '9')
+                    {
+                        numNum ++;
+                    }
+                    if((password[i] >= 'a' && password[i] <= 'z') || (password[i] >= 'A' && password[i] <= 'Z'))
+                    {
+                        letterNum ++;
+                    }
+                }
+
+                if(!numNum)
+                {
+                    return done(null, false, {message: 'Password must contain at least one number.'});
+                }
+                if(!letterNum)
+                {
+                    return done(null, false, {message: 'Password must contain at least one letter.'});
+                }
+
+                var newMerchant            = new Merchant();
+                newMerchant.email    = email.toLowerCase();
+                newMerchant.password = newMerchant.generateHash(password);
+                newMerchant.name = name;
+                newMerchant.userType = 'Merchant';
+                newMerchant.name_lower = name.toLowerCase();
+                newMerchant.address = req.body.address;
+                    
+                newMerchant.save(function(err) 
+                {
+                    if (err){
+                        throw err;
+                    }
+                    return done(null, newMerchant);
                 });
             }
 
@@ -156,6 +243,31 @@ module.exports = async function(passport) {
                 return done(null, false, {message: 'Incorrect password.'}); // create the loginMessage and save it to session as flashdata
 
             // all is well, return successful user
+            return done(null, user);
+        });
+
+    }));
+
+
+    passport.use('merchant-login', new LocalStrategy({
+        usernameField : 'email',
+        passwordField : 'password',
+        passReqToCallback : true 
+    },
+    function(req, email, password, done) { 
+
+        password = password.trim();
+        email = email.toLowerCase();
+        Merchant.findOne({ 'email' :  email }, function(err, user) {
+            if (err)
+                return done(err);
+            if (!user)
+                return done(null, false, {message: 'No user found.'});
+
+
+            if (!user.validPassword(password))
+                return done(null, false, {message: 'Incorrect password.'}); 
+
             return done(null, user);
         });
 

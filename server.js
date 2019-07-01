@@ -133,13 +133,6 @@ server.post('/signup', (req, res, next) => {
     })(req, res, next);
 });
 
-// server.post('/signup', passport.authenticate('local-signup', {
-//         successRedirect : '/loginsuccess', // redirect to the secure profile section
-//         failureRedirect : '/signup', // redirect back to the signup page if there is an error
-//         failureFlash : true // allow flash messages
-//  }));
-
-
 
 server.post('/login', (req, res, next) => {
     passport.authenticate('local-login', (err, user, info) =>{
@@ -161,8 +154,44 @@ server.post('/login', (req, res, next) => {
     })(req, res, next);
 });
 
+// Merchant authentication process
+
+server.post('/merchant/signup', (req, res, next) => {
+    passport.authenticate('merchant-signup', (err, user, info) =>{
+        if(err)
+        {
+            return next(err);
+        }
+        if(!user)
+        {
+            req.session.message = info.message;
+            return res.status(401).json({error : info.message});
+        }
+        req.logIn(user, function(err) {
+            if (err) { return next(err); }
+            return res.status(200).json({email:req.user.email, id:req.user.id});
+        });
+    })(req, res, next);
+});
 
 
+server.post('/merchant/login', (req, res, next) => {
+    passport.authenticate('merchant-login', (err, user, info) =>{
+        if(err)
+        {
+            return next(err);
+        }
+        if(!user)
+        {
+            req.session.message = info.message;
+            return res.status(401).json({error : info.message});
+        }
+        req.logIn(user, function(err) {
+            if (err) { return next(err); }
+            return res.status(200).json({email:req.user.email, name: req.user.name, id:req.user.id});
+        });
+    })(req, res, next);
+});
 
 // server.post('/login', passport.authenticate('local-login', {
 //         successRedirect : '/loginsuccess', // redirect to the secure profile section
@@ -675,7 +704,7 @@ server.get('/merchant/token', async (req, res) => {
 
 server.get('/merchant/getActiveParties', async (req, res, next) => {
     try {
-        const merchant = await Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, 'activeParties').exec();
+        const merchant = await Merchant.findOne({_id: req.user.id}, 'activeParties').exec();
         res.status(200).json(merchant);
         
     } catch(err) {

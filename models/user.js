@@ -6,6 +6,7 @@ const saltRounds = 10;
 
 // define the schema for our user model
 var UserSchema = mongoose.Schema({
+    userType         : String,
     facebook         : {
         id           : String,
         token        : String,

@@ -1,16 +1,16 @@
 'use strict';
 import mongoose from 'mongoose';
-//import bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 
-
-//const saltRounds = 10;
+const saltRounds = 10;
 
 // define the schema for our merchant model
 const MerchantSchema = mongoose.Schema({
     email        	     : String,
+    userType             : String,
     name         	     : String,
     name_lower           : String,
-    //password         : String,
+    password             : String,
     profilepic           : String,
     address              : String,
     location             : {
@@ -34,16 +34,16 @@ const MerchantSchema = mongoose.Schema({
     stripeAccountId: String
 });
 
-// methods ======================
-// generating a hash
-// merchantSchema.methods.generateHash = function(password) {
-//     return bcrypt.hashSync(password, saltRounds);
-// };
+//methods ======================
+//generating a hash
+MerchantSchema.methods.generateHash = function(password) {
+    return bcrypt.hashSync(password, saltRounds);
+};
 
-// // checking if password is valid
-// merchantSchema.methods.validPassword = function(password) {
-//     return bcrypt.compareSync(password, this.password);
-// };
+// checking if password is valid
+MerchantSchema.methods.validPassword = function(password) {
+    return bcrypt.compareSync(password, this.password);
+};
 
 
 
