@@ -28,6 +28,19 @@ const MerchantSchema = mongoose.Schema({
             lastName: String
         }]
     }],
+    activeParties: [{
+        partyId: mongoose.Schema.Types.ObjectId,
+        members: []
+    }],
+    rewards: {
+        check_in: [{
+            reward: String
+        }],
+        loyalty_points: [{
+            reward: String,
+            pointsRequired: Number
+        }]
+    },
     description : String,
     details: String,
     // Stripe account ID to send payments obtained with Stripe Connect.

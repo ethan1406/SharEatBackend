@@ -713,6 +713,76 @@ server.get('/merchant/getActiveParties', async (req, res, next) => {
     }
 });
 
+server.get('/merchant/getRewards', async (req, res, next) => {
+    try {
+        const merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
+        res.status(200).json(merchant);
+        
+    } catch(err) {
+        res.sendStatus(500);
+        next(`Error getting rewards for merchant: ${err.message}`);
+    }
+});
+
+server.post('/merchant/addReward', async (req, res, next) => {
+    try {
+        var merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
+        const {rewardType, pointsRequired, rewardTitle} = req.body;  
+
+        if(rewardType && rewardTitle) {
+            if(rewardType == 'loyalty_points') {
+                merchant.rewards[rewardType].push({rewardId: new mongoose.Types.ObjectId,
+                reward: rewardTitle, pointsRequired});
+            } else if (rewardType == 'check_in'){
+                merchant.rewards[rewardType].push({rewardId: new mongoose.Types.ObjectId,
+                reward: rewardTitle});
+            }      
+            merchant.save(err => {
+                if(err) {
+                    res.sendStatus(500);
+                    next(`Error adding a new reward for merchant: ${err.message}`);
+                }
+                res.sendStatus(200);
+            });
+        } else {    
+            res.sendStatus(400);
+            next('Invalid Input');   
+        }
+        
+    } catch(err) {
+        res.sendStatus(500);
+        next(`Error retrieving rewards for merchant: ${err.message}`);
+    }
+});
+
+
+server.delete('/merchant/deleteReward', async (req, res, next) => {
+    try {
+        var merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
+        const rewardId = req.query.rewardId;  
+
+        if(rewardId) {
+            merchant.rewards.check_in = merchant.rewards.check_in.filter(reward => reward._id != rewardId);
+            merchant.rewards.loyalty_points = 
+                merchant.rewards.loyalty_points.filter(reward => reward._id != rewardId);
+            merchant.save(err => {
+                if(err) {
+                    res.sendStatus(500);
+                    next(`Error deleting a reward for merchant: ${err.message}`);
+                }
+                res.sendStatus(200);
+            });
+        } else {    
+            res.sendStatus(400);
+            next('Invalid Input');   
+        }
+        
+    } catch(err) {
+        res.sendStatus(500);
+        next(`Error retrieving rewards for merchant: ${err.message}`);
+    }
+});
+
 /**
  * POST /api/passengers/me/ephemeral_keys
  *
