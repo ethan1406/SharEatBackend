@@ -2,6 +2,7 @@ import express from 'express';
 import passport from 'passport';
 
 import Merchant from '../models/merchant';
+import Party from '../models/party';
 
 
 const router = express.Router();
@@ -129,6 +130,22 @@ router.delete('/deleteReward', async (req, res, next) => {
     } catch(err) {
         res.sendStatus(500);
         next(`Error retrieving rewards for merchant: ${err.message}`);
+    }
+});
+
+
+
+router.get('/allParties', async (req, res, next) => {
+    try {
+        const parties = await Party.find({
+            restaurantId: req.user.id, 
+        }).exec();
+
+        res.status(200).send(parties);
+        
+    } catch (err) {
+        res.status(500);
+        next(`Internal error from Mongoose: ${err.message}`);
     }
 });
 
