@@ -20,11 +20,6 @@ import User from './models/user';
 import Party from './models/party';
 import Merchant from './models/merchant';
 
-//aws s3
-// import AWS from 'aws-sdk';
-// const s3 = new AWS.S3();
-
-// import apiRouter from './api';
 
 const server = express();
 
@@ -58,11 +53,6 @@ server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({ extended: false }));
 
 
-// server.get('*', function(req, res, next){ 
-//   console.log(req.headers.host);
-//   console.log(req.url);
-//   next(); 
-// });
 
 server.use(flash());
 
@@ -86,6 +76,12 @@ var pusher = new Pusher({
   encrypted: true
 });
 
+
+//separating routes
+server.use('/merchant', require('./routes/merchant_routes.js'));
+server.use('/user', require('./routes/user_routes.js'));
+
+
 // Authenticaiton APIs
 
 
@@ -101,234 +97,6 @@ server.get('/auth/facebook/callback',
 }));
 
 
-
-// server.get('/signup', function(req, res) {
-
-//         // render the page and pass in any flash data if it exists
-//         res.render('signup.ejs', { message: req.flash('signupMessage') });
-//     });
-
-// server.get('/login', (req,res)=> {
-//     res.render('login.ejs', { message: req.flash('loginMessage') });
-// });
-
-
-server.post('/signup', (req, res, next) => {
-    passport.authenticate('local-signup', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName, 
-                loyaltyPoints: req.user.loyaltyPoints});
-        });
-    })(req, res, next);
-});
-
-
-server.post('/login', (req, res, next) => {
-    passport.authenticate('local-login', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName, 
-                loyaltyPoints: req.user.loyaltyPoints});
-        });
-    })(req, res, next);
-});
-
-// Merchant authentication process
-
-server.post('/merchant/signup', (req, res, next) => {
-    passport.authenticate('merchant-signup', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id});
-        });
-    })(req, res, next);
-});
-
-
-server.post('/merchant/login', (req, res, next) => {
-    passport.authenticate('merchant-login', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, name: req.user.name, id:req.user.id});
-        });
-    })(req, res, next);
-});
-
-// server.post('/login', passport.authenticate('local-login', {
-//         successRedirect : '/loginsuccess', // redirect to the secure profile section
-//         failureRedirect : '/login', // redirect back to the signup page if there is an error
-//         failureFlash : true // allow flash messages
-// }));
-
-
-server.get('/user/receipts', async (req, res) => {
-    try {
-        const {pastOrders} = await User.findOne({_id: req.user._id}, 'pastOrders').exec();
-        res.status(200).json(pastOrders);
-    } catch (err) {
-        res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
-    }
-});
-
-
-server.get('/user/loyaltyPoints', async (req, res) => {
-    try {
-        const {loyaltyPoints} = await User.findOne({_id: req.user._id}, 'loyaltyPoints').exec();
-        res.status(200).json(loyaltyPoints);
-    } catch (err) {
-        res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
-    }
-});
-
-
-
-server.get('/getMerchantInfo', async (req, res) => {
-    try {
-        const restaurantId = req.query.restaurantId;
-        const merchant = await Merchant.findOne({_id: restaurantId}, ['-__v','-stripeAccountId']).exec();
-        res.status(200).json(merchant);
-    } catch(err) {
-        console.log(`error when getting merchant info: ${err.message}`);
-        res.sendStatus(500);
-    }
-});
-
-server.get('/map/find', async (req, res) =>
-{
-    try {
-        const name = req.query.name.toLowerCase();
-        const merchants = await Merchant.find({'name_lower' : { $regex: new RegExp(name, 'i') }}).limit(10).exec();
-        res.status(200).json(merchants);
-    } catch (err) {
-        console.log(err.message);
-        res.sendStatus(500);
-    }
-});
-
-
-// merchant APIs
-
-
-server.get('/map/findclosest', (req, res) =>
-{
-    const currLatitude = req.query.latitude;
-    const currLongitude = req.query.longitude;
-
-    Merchant.find({}, (err, merchants) => {
-        if(err)
-        {
-            console.log(err);
-        }
-        var distances = [];
-
-        var index = 0;
-
-        //Haversine Formula
-        merchants.forEach((merchant) => {
-            const R = 6371;
-
-            const lat = merchant.location.latitude;
-            const lon = merchant.location.longitude;
-            const dLat = currLatitude - lat;
-            const dLon = currLongitude - lon;
-
-            const temp = Math.sin(dLat/2) * Math.sin(dLat/2)
-                + Math.cos(lat) * Math.cos(currLatitude)
-                * Math.sin(dLon/2) * Math.sin(dLon/2);
-
-            const temp2 = 2 * Math.atan2(Math.sqrt(temp), Math.sqrt(1-temp));
-
-            const distance = R * temp2;
-            distances.push({distance, index});
-            index++;
-
-        });
-        distances.sort((a , b) => {
-            return a.distance - b.distance;
-        });
-
-        var closestMerchants = [];
-
-        const numMerchants = distances.length > 10 ? 10 : distances.length;
-        for(var i = 0; i < numMerchants; i++)
-        {
-            closestMerchants.push(merchants[distances[i].index]);
-        }
-
-
-        res.status(200).json(closestMerchants);
-
-    });
-    
-});
-
-server.get('/map/allRestaurants', (req, res) =>
-{
-    Merchant.find({}, (err, merchants) => {
-        if(err)
-        {
-            console.log(err);
-        }
-
-        res.status(200).json(merchants);
-
-    });
-    
-});
-
-//return menu based on restaurant id
-server.get('/menu/:restaurantId', (req, res)=> {
-
-    Merchant.findOne({_id: req.params.restaurantId}, 'menu', (err, menu) => {
-        if(err)
-        {
-            console.log('menu error: ' + err);
-        }
-
-        res.json(menu);
-
-    });
-
-});
 
 
 /*
@@ -464,28 +232,6 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
         next(`failed to add a new order to the orders: ${err.message}`);
 
     }
-
-
-
-    // Party.findOne({_id: req.params.partyId}, 'orders', (err, party) => {
-    //     if(err)
-    //     {
-    //         res.status(500).send(`failed to add a new order to the party:  ${err.message}`);
-    //         next(`failed to add a new order to the party:  ${err.message}`);
-    //     }
-    //     const party = await Party.findOne({_id: partyId}).exec();
-
-    //     party.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
-    //     party.save((err, order) =>{
-    //         if(err)
-    //         {
-    //             res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
-    //             next(`failed to add a new order to the orders: ${err.message}`);
-    //         }
-    //         const orderId = order._id;
-    //         return res.send({ status : 0, orderId});
-    //     });
-    // });
 
 });
 
@@ -636,12 +382,6 @@ server.get('/user/listCards', async (req, res) => {
 
 
 
-server.get('/merchant/dashboard', (req,res) => {
-    res.render('index', {
-        content: '...'
-    });
-});
-
 
 server.get('/merchant/authorize', (req,res) => {
     //Generate a random string as state to protect from CSRF and place it in the session.
@@ -702,86 +442,6 @@ server.get('/merchant/token', async (req, res) => {
     });
 });
 
-server.get('/merchant/getActiveParties', async (req, res, next) => {
-    try {
-        const merchant = await Merchant.findOne({_id: req.user.id}, 'activeParties').exec();
-        res.status(200).json(merchant);
-        
-    } catch(err) {
-        res.sendStatus(500);
-        next(`Error getting active parties for merchant: ${err.message}`);
-    }
-});
-
-server.get('/merchant/getRewards', async (req, res, next) => {
-    try {
-        const merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
-        res.status(200).json(merchant);
-        
-    } catch(err) {
-        res.sendStatus(500);
-        next(`Error getting rewards for merchant: ${err.message}`);
-    }
-});
-
-server.post('/merchant/addReward', async (req, res, next) => {
-    try {
-        var merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
-        const {rewardType, pointsRequired, rewardTitle} = req.body;  
-
-        if(rewardType && rewardTitle) {
-            if(rewardType == 'loyalty_points') {
-                merchant.rewards[rewardType].push({rewardId: new mongoose.Types.ObjectId,
-                reward: rewardTitle, pointsRequired});
-            } else if (rewardType == 'check_in'){
-                merchant.rewards[rewardType].push({rewardId: new mongoose.Types.ObjectId,
-                reward: rewardTitle});
-            }      
-            merchant.save(err => {
-                if(err) {
-                    res.sendStatus(500);
-                    next(`Error adding a new reward for merchant: ${err.message}`);
-                }
-                res.sendStatus(200);
-            });
-        } else {    
-            res.sendStatus(400);
-            next('Invalid Input');   
-        }
-        
-    } catch(err) {
-        res.sendStatus(500);
-        next(`Error retrieving rewards for merchant: ${err.message}`);
-    }
-});
-
-
-server.delete('/merchant/deleteReward', async (req, res, next) => {
-    try {
-        var merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
-        const rewardId = req.query.rewardId;  
-
-        if(rewardId) {
-            merchant.rewards.check_in = merchant.rewards.check_in.filter(reward => reward._id != rewardId);
-            merchant.rewards.loyalty_points = 
-                merchant.rewards.loyalty_points.filter(reward => reward._id != rewardId);
-            merchant.save(err => {
-                if(err) {
-                    res.sendStatus(500);
-                    next(`Error deleting a reward for merchant: ${err.message}`);
-                }
-                res.sendStatus(200);
-            });
-        } else {    
-            res.sendStatus(400);
-            next('Invalid Input');   
-        }
-        
-    } catch(err) {
-        res.sendStatus(500);
-        next(`Error retrieving rewards for merchant: ${err.message}`);
-    }
-});
 
 /**
  * POST /api/passengers/me/ephemeral_keys
@@ -990,33 +650,6 @@ server.get('/user', (req, res) =>
     res.send(req.user);
 });
 
-
-/*
-================================================
-================================================
-================================================
-================================================
-
-
-// server.get('*', loggedIn, (req, res) => {
-
-//  //res.render(__dirname + "/views/index.ejs");
-//   res.render('index', {
-//     content: '...'
-//   });
-// });
-// if(typeof (party.orders.find(order => order.foodId === req.params.foodId)) === 'undefined')
-            // {
-            //  party.orders.push({foodId: req.params.foodId, buyers:[req.user._id]});
-            // }
-            // else
-            // {
-            //  party.orders.
-            // }
-================================================
-================================================
-================================================
-*/
 
 
 
