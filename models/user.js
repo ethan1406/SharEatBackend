@@ -35,6 +35,12 @@ var UserSchema = mongoose.Schema({
         address: String,
         points: Number
     }],
+    creditCards : [{
+        last4Digits : Number,
+        token : String,
+        type: {type: String},
+        selected: Boolean
+    }],
     // Stripe customer ID storing the payment sources.
     stripeCustomerId : String
 });

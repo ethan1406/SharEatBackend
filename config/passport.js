@@ -14,7 +14,8 @@ var Merchant   = require('../models/merchant');
 
 // load the auth variables
 var configAuth = require('./auth');
-const stripe = require('stripe')(configAuth.stripe.secretKey);
+import {stripeKeys} from '../config/auth';
+const stripe = require('stripe')(stripeKeys.secretKey);
 
 function validateEmail(email) {
   var re = /\S+@\S+\.\S+/;

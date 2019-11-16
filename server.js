@@ -325,7 +325,8 @@ server.post('/order/split', async (req, res, next) => {
 
 //Stripe related API endpoints
 
-const stripe = require('stripe')(configAuth.stripe.secretKey);
+import {stripeKeys} from './config/auth';
+const stripe = require('stripe')(stripeKeys.secretKey);
 
 
 server.post('/user/addPayment', async (req, res) => {

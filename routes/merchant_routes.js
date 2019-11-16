@@ -4,6 +4,8 @@ import passport from 'passport';
 import Merchant from '../models/merchant';
 import Party from '../models/party';
 
+import mongoose from 'mongoose';
+
 
 const router = express.Router();
 
