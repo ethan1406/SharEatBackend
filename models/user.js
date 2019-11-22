@@ -35,7 +35,7 @@ var UserSchema = mongoose.Schema({
         address: String,
         points: Number
     }],
-    creditCards : [{
+    cards : [{
         last4Digits : Number,
         token : String,
         type: {type: String},

@@ -323,67 +323,6 @@ server.post('/order/split', async (req, res, next) => {
 });
 
 
-//Stripe related API endpoints
-
-import {stripeKeys} from './config/auth';
-const stripe = require('stripe')(stripeKeys.secretKey);
-
-
-server.post('/user/addPayment', async (req, res) => {
-    try {
-        const card = await stripe.customers.createSource(
-            req.user.stripeCustomerId,
-            {source: req.body.tokenId}
-        );
-
-        if (card) {
-            await stripe.customers.update(req.user.stripeCustomerId, {
-              default_source: card.id
-            });
-        }
-        
-    } catch (err) {
-        console.log(`could not create or update source: ${err.message}`);
-        res.sendStatus(500);
-    }
-
-    res.sendStatus(200);
-
-});
-
-
-server.post('/user/changeDefaultPayment', async (req, res) => {
-    try {
-        await stripe.customers.update(req.user.stripeCustomerId, {
-          default_source: req.body.cardId
-        });
-    } catch (err) {
-        console.log(`could not update source: ${err.message}`);
-        res.sendStatus(500);
-    }
-
-    res.sendStatus(200);
-});
-
-
-server.get('/user/listCards', async (req, res) => {
-    try {
-        const cards = await stripe.customers.listCards(req.user.stripeCustomerId);
-
-        if (cards) {
-            res.status(200).json(cards);
-        }
-        
-    } catch (err) {
-        console.log(`could not retrieve the list of cards for the user: ${err.message}`);
-        res.sendStatus(500);
-    }
-
-});
-
-
-
-
 server.get('/merchant/authorize', (req,res) => {
     //Generate a random string as state to protect from CSRF and place it in the session.
     req.session.state = Math.random().toString(36).slice(2);

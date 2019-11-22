@@ -50,36 +50,36 @@ router.post('/login', (req, res, next) => {
     })(req, res, next);
 });
 
-router.post('/storeCreditCardToken', async (req, res, next) => {
+router.post('/storeCardToken', async (req, res, next) => {
     try {
         const {data} = await axios.put(`${spreedly.spreedlyAddCardURL}/${req.body.payment_method.token}/retain.json`,
                 {}, {auth: {username: spreedly.environment_key, password: spreedly.secret_key}});
-        const user = await User.findOne({_id: req.user._id}, 'creditCards').exec();
+        const user = await User.findOne({_id: req.user._id}, 'cards').exec();
 
-        user.creditCards.push({
+        user.cards.forEach(card => {
+            card.selected = false;
+        });
+
+        const card = {
             last4Digits: data.transaction.payment_method.last_four_digits,
             token: data.transaction.payment_method.token,
             type: data.transaction.payment_method.data.type,
             selected: true
-        });
-
-
-        user.creditCards.forEach(card => {
-            card.selected = false;
-        });
+        };
+        user.cards.push(card);
 
         await user.save();
-        res.status(200).json({'creditCards': user.creditCards});
+        res.status(200).json({'card': card});
     } catch (err) {
-        res.status(500).send(err);
+        res.status(500).json(err);
         next(err.message);
     }
 });
 
 router.get('/getCards', async (req, res, next) => {
     try {
-       const {creditCards} = await User.findOne({_id: req.user._id}, 'creditCards').exec();
-       res.status(200).json({creditCards});
+       const {cards} = await User.findOne({_id: req.user._id}, 'cards').exec();
+       res.status(200).json({cards});
 
     } catch (err) {
         next(`could not retrieve the list of cards for the user: ${err.message}`);
@@ -91,8 +91,8 @@ router.get('/getCards', async (req, res, next) => {
 
 router.post('/changeDefaultPayment', async (req, res, next) => {
     try {
-        const user = await User.findOne({_id: req.user._id}, 'creditCards').exec();
-        user.creditCards.forEach(card => {
+        const user = await User.findOne({_id: req.user._id}, 'cards').exec();
+        user.cards.forEach(card => {
             if(card._id.toString() == req.body.cardId.toString()) {
                 card.selected = true;
             } else {
@@ -100,13 +100,11 @@ router.post('/changeDefaultPayment', async (req, res, next) => {
             }
         });
         await user.save();
-        res.status(200).json({'creditCards' : user.creditCards});
+        res.status(200).json({'cards' : user.cards});
     } catch (err) {
         next(`could not update source: ${err.message}`);
-        res.sendStatus(500);
+        res.status(500).json(err);
     }
-
-    res.sendStatus(200);
 });
 
 
