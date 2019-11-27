@@ -6,15 +6,8 @@ const saltRounds = 10;
 
 // define the schema for our user model
 var UserSchema = mongoose.Schema({
-    userType         : String,
-    facebook         : {
-        id           : String,
-        token        : String,
-    },
-    email        	 : String,
-    firstName        : String,
-    lastName         : String,
-    password         : String,
+    email            : String,
+    amazonUserSub    : String,
     profilepic       : String,
     pastOrders       : [{
         time         : Date,
@@ -27,7 +20,6 @@ var UserSchema = mongoose.Schema({
         description: String,
         address: String,
     }],
-    friends          : Array,
     loyaltyPoints    : [{
         restaurantId: mongoose.Schema.Types.ObjectId,
         restaurantName: String,
@@ -41,8 +33,6 @@ var UserSchema = mongoose.Schema({
         type: {type: String},
         selected: Boolean
     }],
-    // Stripe customer ID storing the payment sources.
-    stripeCustomerId : String
 });
 
 // methods ======================

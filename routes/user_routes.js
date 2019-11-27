@@ -9,24 +9,18 @@ import axios from 'axios';
 const router = express.Router();
 
 
-router.post('/signup', (req, res, next) => {
-    passport.authenticate('local-signup', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName, 
-                loyaltyPoints: req.user.loyaltyPoints});
-        });
-    })(req, res, next);
+router.post('/signup', async (req, res, next) => {
+   var newUser = new User();
+   newUser.email = req.body.email;
+   newUser.amazonUserSub = req.body.amazonUserSub;
+
+   try {
+     newUser.save();
+     res.status(200).send();
+   } catch(err) {
+     res.status(500).json(err.message);
+     next(err);
+   }
 });
 
 
@@ -79,7 +73,13 @@ router.post('/storeCardToken', async (req, res, next) => {
 router.get('/getCards', async (req, res, next) => {
     try {
        const {cards} = await User.findOne({_id: req.user._id}, 'cards').exec();
-       res.status(200).json({cards});
+       
+       //remove token field
+       const userCards = cards.map(card => {
+         return {_id: card._id, last4Digits: card.last4Digits, selected: card.selected,
+            type: card.type};
+       });
+       res.status(200).json({cards: userCards});
 
     } catch (err) {
         next(`could not retrieve the list of cards for the user: ${err.message}`);
@@ -131,7 +131,7 @@ router.get('/loyaltyPoints', async (req, res) => {
 router.get('/getMerchantInfo', async (req, res) => {
     try {
         const restaurantId = req.query.restaurantId;
-        const merchant = await Merchant.findOne({_id: restaurantId}, ['-__v','-stripeAccountId']).exec();
+        const merchant = await Merchant.findOne({_id: restaurantId}).exec();
         res.status(200).json(merchant);
     } catch(err) {
         console.log(`error when getting merchant info: ${err.message}`);
