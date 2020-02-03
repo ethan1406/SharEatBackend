@@ -138,71 +138,62 @@ server.get('/party/:partyId', async (req, res, next) => {
 });
 
 
-server.post('/party/:restaurantId/:tableNumber', async (req, res, next)=> {
-    if(!req.user)
-    {
-        console.log('user is not logged in');
-    }
-    else
-    {
-        Merchant.findOne({_id: req.params.restaurantId}, (err, merchant) => {
-            if(err)
-            {
-                console.log('table join merchant error: ' + err);
-            }
+server.post('/party/:restaurantId/:tableNumber/:amazonUserSub', async (req, res, next)=> { d
+    Merchant.findOne({_id: req.params.restaurantId}, (err, merchant) => {
+        if(err)
+        {
+            console.log('table join merchant error: ' + err);
+        }
 
-            if(!merchant)
-            {
-                console.log('no merchant by the id exists');
-                return res.send({ status : -1, message: 'no merchant by the id exists'});
-            }
-            else
-            {
-                Party.findOne({restaurantId: req.params.restaurantId, tableNumber: req.params.tableNumber}, (err, party) => {
-                    if(err)
-                    {
-                        console.log('table join party error: ' + err);
-                    }
-                    if(party)
-                    {
-                        party.members.push(req.user._id);
+        if(!merchant)
+        {
+            console.log('no merchant by the id exists');
+            return res.send({ status : -1, message: 'no merchant by the id exists'});
+        }
+        else
+        {
+            Party.findOne({restaurantId: req.params.restaurantId, tableNumber: req.params.tableNumber}, (err, party) => {
+                if(err)
+                {
+                    console.log('table join party error: ' + err);
+                }
+                if(party)
+                {
+                    party.members.push(req.params.amazonUserSub);
 
-                        party.save((err) => {
-                            if(err)
-                            {
-                                console.log('failed to save a party member" ' + err);
-                            }
-                            return res.send({ status : 0, partyId: party._id});
-                        });
-                    }
-                    else
-                    {
-                        var newParty = new Party(); 
-                        newParty.members.push(req.user._id);
-                        newParty.restaurantId = req.params.restaurantId;
-                        newParty.finished = false;
-                        newParty.tableNumber = req.params.tableNumber;
-                        newParty.time = Date.now();
-                        newParty.orderTotal = 10;
-                        newParty.save((err) => {
-                            if(err)
-                            {
-                                console.log('failed to save a new party: " ' + err);
-                            }
-                            return res.send({ status : 0, partyId: newParty._id});
-                        });
-                    }
-                    
-                });
-            }
-
-
-        });
-    }
+                    party.save((err) => {
+                        if(err)
+                        {
+                            console.log('failed to save a party member" ' + err);
+                        }
+                        return res.send({ status : 0, partyId: party._id});
+                    });
+                }
+                else
+                {
+                    var newParty = new Party(); 
+                    newParty.members.push(req.params.amazonUserSub);
+                    newParty.restaurantId = req.params.restaurantId;
+                    newParty.finished = false;
+                    newParty.tableNumber = req.params.tableNumber;
+                    newParty.time = Date.now();
+                    newParty.orderTotal = 10;
+                    newParty.save((err) => {
+                        if(err)
+                        {
+                            console.log('failed to save a new party: " ' + err);
+                        }
+                        return res.send({ status : 0, partyId: newParty._id});
+                    });
+                }
+                
+            });
+        }
+    });
+    
 });
 
-server.post('/order/:partyId/:foodId', async (req, res, next) => {
-    
+server.post('/order/:partyId/:foodId/:amazonUserSub', async (req, res, next) => {
     try {
         const party = await Party.findOne({_id: req.params.partyId}).exec();
         const restaurant = await Merchant.findOne({_id: party.restaurantId}, 'menu').exec();
@@ -215,7 +206,7 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
             });
         });
         party.orderTotal += price;
-        party.orders.push({foodId : req.params.foodId, buyers:[req.user._id]});
+        party.orders.push({foodId : req.params.foodId, buyers:[req.params.amazonUserSub]});
         
         party.save((err, order) =>{
             if(err)
@@ -239,6 +230,7 @@ server.post('/order/:partyId/:foodId', async (req, res, next) => {
 server.post('/order/split', async (req, res, next) => {
     try {
         var party = await Party.findOne({_id: req.body.partyId}, ['orders','members']).exec();
+
         party.orders.forEach((order)=> {
             if(order._id == req.body.orderId) {
                 //check if the user is already one of the buyers
@@ -247,7 +239,7 @@ server.post('/order/split', async (req, res, next) => {
                 var index = -1;
                 var count = 0;
                 order.buyers.forEach((buyer) => {
-                    if(buyer.userId.toString() === req.user._id.toString()) {
+                    if(buyer.amazonUserSub === req.body.amazonUserSub) {
                         isFinished = buyer.finished;
                         isBuyer = true;
                         index = count;
@@ -257,45 +249,41 @@ server.post('/order/split', async (req, res, next) => {
                 
                 if(!isFinished) {
                     if(!isBuyer) {
-                        order.buyers.push({firstName: req.user.firstName, 
-                            lastName: req.user.lastName, userId: req.user._id, finished: false});
+                        order.buyers.push({firstName: req.body.firstName, 
+                            lastName: req.body.lastName, amazonUserSub: req.body.amazonUserSub, finished: false});
                         
                         // check if the user is already a member of the party
                         var isMember = false;
                         var indexOfMember = -1;
                         party.members.forEach((member, index) =>{
-                            if(member.userId.toString() === req.user._id.toString()) {
+                            if(member.amazonUserSub === req.body.amazonUserSub) {
                                 isMember = true;
                                 indexOfMember = index;
                             }
                         });
 
                         if(!isMember) {
-                            party.members.push({userId: req.user._id, count: 1, tax: 0, tip: 0});
+                            party.members.push({amazonUserSub: req.body.amazonUserSub, count: 1, tax: 0, tip: 0});
                         } else {
                             party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
                         }
                         
-                        party.save(err => {
-                            if(err) {
-                                next(err.message);
-                            }
-                            pusher.trigger(req.body.partyId, 'splitting', {
-                              'add': true,
-                              'isMember': isMember,
-                              'orderId': req.body.orderId,
-                              'firstName': req.user.firstName,
-                              'lastName': req.user.lastName,
-                              'userId': req.user._id
-                            });
-                            return res.sendStatus(200);
+                        party.save();
+                        pusher.trigger(req.body.partyId, 'splitting', {
+                          'add': true,
+                          'isMember': isMember,
+                          'orderId': req.body.orderId,
+                          'firstName': req.body.firstName,
+                          'lastName': req.body.lastName,
+                          'amazonUserSub': req.body.amazonUserSub
                         });
+                        return res.sendStatus(200);
                     } else {
                         order.buyers.splice(index, 1);
                         // const indexToRemove = party.members.indexOf(req.user._id);
                         // party.members.splice(indexToRemove, 1);
                         party.members.forEach(member => {
-                                if(member.userId.toString() === req.user._id.toString()) {
+                                if(member.amazonUserSub === req.body.amazonUserSub) {
                                     member.count --;
                                 }
                             });
@@ -306,7 +294,7 @@ server.post('/order/split', async (req, res, next) => {
                             pusher.trigger(req.body.partyId, 'splitting', {
                               'add': false,
                               'orderId': req.body.orderId,
-                              'userId': req.user._id
+                              'amazonUserSub': req.body.amazonUserSub
                             });
                             return res.status(200).send('user is already one of the buyers');
                         });

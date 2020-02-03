@@ -20,12 +20,11 @@ var PartySchema = mongoose.Schema({
         buyers           : [{
             firstName: String, 
             lastName: String, 
-            userId: mongoose.Schema.Types.ObjectId,
+            amazonUserSub: String,
             finished: Boolean
         }]
         
-    }],
-    stripeChargeId       : Number
+    }]
 });
 
 

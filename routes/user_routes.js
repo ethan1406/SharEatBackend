@@ -10,45 +10,50 @@ const router = express.Router();
 
 
 router.post('/signup', async (req, res, next) => {
-   var newUser = new User();
-   newUser.email = req.body.email;
-   newUser.amazonUserSub = req.body.amazonUserSub;
-
-   try {
-     newUser.save();
-     res.status(200).send();
-   } catch(err) {
-     res.status(500).json(err.message);
-     next(err);
-   }
+    try {
+        const count = User.count({amazonUserSub: req.body.amazonUserSub});
+        if (count == 0) {
+            var newUser = new User();                   
+            newUser.email = req.body.email;
+            newUser.amazonUserSub = req.body.amazonUserSub;
+            newUser.save();
+            res.status(200).send();
+        } else {
+            res.status(500).json('User with the id already exists');
+            next();
+        }
+    } catch(err) {
+        res.status(500).json(err.message);
+        next(err);
+    }
 });
 
 
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local-login', (err, user, info) =>{
-        if(err)
-        {
-            return next(err);
-        }
-        if(!user)
-        {
-            req.session.message = info.message;
-            return res.status(401).json({error : info.message});
-        }
-        req.logIn(user, function(err) {
-            if (err) { return next(err); }
-            return res.status(200).json({email:req.user.email, id:req.user.id, 
-                firstName: req.user.firstName, lastName: req.user.lastName, 
-                loyaltyPoints: req.user.loyaltyPoints});
-        });
-    })(req, res, next);
-});
+// router.post('/login', (req, res, next) => {
+//     passport.authenticate('local-login', (err, user, info) =>{
+//         if(err)
+//         {
+//             return next(err);
+//         }
+//         if(!user)
+//         {
+//             req.session.message = info.message;
+//             return res.status(401).json({error : info.message});
+//         }
+//         req.logIn(user, function(err) {
+//             if (err) { return next(err); }
+//             return res.status(200).json({email:req.user.email, id:req.user.id, 
+//                 firstName: req.user.firstName, lastName: req.user.lastName, 
+//                 loyaltyPoints: req.user.loyaltyPoints});
+//         });
+//     })(req, res, next);
+// });
 
-router.post('/storeCardToken', async (req, res, next) => {
+router.post('/:amazonUserSub/storeCardToken', async (req, res, next) => {
     try {
         const {data} = await axios.put(`${spreedly.spreedlyAddCardURL}/${req.body.payment_method.token}/retain.json`,
                 {}, {auth: {username: spreedly.environment_key, password: spreedly.secret_key}});
-        const user = await User.findOne({_id: req.user._id}, 'cards').exec();
+        const user = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'cards').exec();
 
         user.cards.forEach(card => {
             card.selected = false;
@@ -70,9 +75,9 @@ router.post('/storeCardToken', async (req, res, next) => {
     }
 });
 
-router.get('/getCards', async (req, res, next) => {
+router.get('/:amazonUserSub/getCards', async (req, res, next) => {
     try {
-       const {cards} = await User.findOne({_id: req.user._id}, 'cards').exec();
+       const {cards} = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'cards').exec();
        
        //remove token field
        const userCards = cards.map(card => {
@@ -89,9 +94,9 @@ router.get('/getCards', async (req, res, next) => {
 });
 
 
-router.post('/changeDefaultPayment', async (req, res, next) => {
+router.post('/:amazonUserSub/changeDefaultPayment', async (req, res, next) => {
     try {
-        const user = await User.findOne({_id: req.user._id}, 'cards').exec();
+        const user = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'cards').exec();
         user.cards.forEach(card => {
             if(card._id.toString() == req.body.cardId.toString()) {
                 card.selected = true;
@@ -109,9 +114,9 @@ router.post('/changeDefaultPayment', async (req, res, next) => {
 
 
 
-router.get('/receipts', async (req, res) => {
+router.get('/:amazonUserSub/receipts', async (req, res) => {
     try {
-        const {pastOrders} = await User.findOne({_id: req.user._id}, 'pastOrders').exec();
+        const {pastOrders} = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'pastOrders').exec();
         res.status(200).json(pastOrders);
     } catch (err) {
         res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
@@ -119,9 +124,9 @@ router.get('/receipts', async (req, res) => {
 });
 
 
-router.get('/loyaltyPoints', async (req, res) => {
+router.get('/:amazonUserSub/loyaltyPoints', async (req, res) => {
     try {
-        const {loyaltyPoints} = await User.findOne({_id: req.user._id}, 'loyaltyPoints').exec();
+        const {loyaltyPoints} = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'loyaltyPoints').exec();
         res.status(200).json(loyaltyPoints);
     } catch (err) {
         res.status(500).send(`could not retrieve user's receipts: ${err.message}`);
