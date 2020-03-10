@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 // define the schema for our party model
 var PartySchema = mongoose.Schema({
     members        	     : [{
-        userId: String, 
+        amazonUserSub: String, 
         count: Number,
         tax: Number,
         tip: Number

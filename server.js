@@ -97,8 +97,6 @@ server.get('/auth/facebook/callback',
 }));
 
 
-
-
 /*
     Table Logic
 
@@ -551,9 +549,6 @@ server.post('/party/charge', async (req, res, next) => {
         next(`Error adding token to customer: ${err.message}`);
     }
 });
-
-
-
 
     
 

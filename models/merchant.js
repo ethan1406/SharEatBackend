@@ -20,30 +20,32 @@ const MerchantSchema = mongoose.Schema({
     },
     transactions: [{
         partyId: mongoose.Schema.Types.ObjectId,
+        first_payment_time: Date,
         charges: [{
             time: Date,
             chargeId: String,
-            firstName: String,
-            lastName: String
+            amazonUserSub: String
         }]
     }],
-    activeParties: [{
-        partyId: mongoose.Schema.Types.ObjectId,
-        members: []
-    }],
-    rewards: {
-        check_in: [{
-            reward: String
-        }],
-        loyalty_points: [{
-            reward: String,
-            pointsRequired: Number
+    rewards:  [{
+        reward: String,
+        pointsRequired: Number,
+        redemptions: [{
+            time: Date,
+            amazonUserSub: String
         }]
-    },
+    }],
+    members: [{
+        amazonUserSub: String,
+        signup_time: Date
+    }],
+    visits: [{
+        amazonUserSub: String,
+        time: Date,
+        returning: Boolean
+    }],
     description : String,
-    details: String,
-    // Stripe account ID to send payments obtained with Stripe Connect.
-    stripeAccountId: String
+    details: String
 });
 
 //methods ======================

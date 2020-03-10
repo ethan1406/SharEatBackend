@@ -25,7 +25,10 @@ var UserSchema = mongoose.Schema({
         restaurantName: String,
         description: String,
         address: String,
-        points: Number
+        points: Number,
+        redemptions: [{
+            time: Date
+        }]
     }],
     cards : [{
         last4Digits : Number,
