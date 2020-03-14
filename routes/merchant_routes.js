@@ -67,6 +67,21 @@ router.get('/getActiveParties', async (req, res, next) => {
     }
 });
 
+router.get('/webhook/omnivore', async (req, res, next) => {
+    res.status(200).send('ae8e8565be464ad89729828d608cd0b5');
+});
+
+router.post('/webhook/omnivore', async (req, res, next) => {
+    try {
+        const {omnivore} = await Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, 'omnivore').exec();
+        omnivore['data'] = req.body ;
+        omnivore.save();
+    } catch (err) {
+        res.sendStatus(500);
+        next(`Error getting rewards for merchant: ${err.message}`);
+    }
+});
+
 router.get('/getRewards', async (req, res, next) => {
     try {
         const merchant = await Merchant.findOne({_id: req.user.id}, 'rewards').exec();
