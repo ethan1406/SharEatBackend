@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post('/signup', async (req, res, next) => {
     try {
-        const count = User.count({amazonUserSub: req.body.amazonUserSub});
+        const count = await User.count({amazonUserSub: req.body.amazonUserSub}).exec();
         if (count == 0) {
             var newUser = new User();                   
             newUser.email = req.body.email;

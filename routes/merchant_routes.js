@@ -67,7 +67,7 @@ router.get('/getActiveParties', async (req, res, next) => {
     }
 });
 
-router.get('/webhook/omnivore', async (req, res, next) => {
+router.get('/webhook/omnivore', async (req, res) => {
     res.status(200).send('ae8e8565be464ad89729828d608cd0b5');
 });
 
