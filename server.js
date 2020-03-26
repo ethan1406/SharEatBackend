@@ -6,6 +6,8 @@ import express from 'express';
 import session from 'express-session';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
+import path from 'path';
+import cors from 'cors';
 //import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
@@ -52,6 +54,12 @@ server.use(session({
 server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({ extended: false }));
 
+const corsOptions = {
+  origin: 'https://analytics.shareatpay.com',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+server.use(cors(corsOptions));
 
 
 server.use(flash());
@@ -63,9 +71,8 @@ server.use(passport.session());
 
 
 
-//testing purposes
 server.set('view engine', 'ejs');
-server.use(express.static('public'));
+server.use(express.static(path.join(__dirname, 'build')));
 
 var Pusher = require('pusher');
 var pusher = new Pusher({
@@ -82,19 +89,10 @@ server.use('/merchant', require('./routes/merchant_routes.js'));
 server.use('/user', require('./routes/user_routes.js'));
 
 
-// Authenticaiton APIs
 
-
-server.get('/auth/facebook', passport.authenticate('facebook', { scope : ['email', 'user_friends'],
-                                                                failureFlash: true ,
-                                                                successFlash: 'Welcome!'}));
-
-    // handle the callback after facebook has authenticated the user
-server.get('/auth/facebook/callback',
-        passport.authenticate('facebook', {
-            successRedirect : '/loginsuccess',
-            failureRedirect : '/login',
-}));
+server.get('/analytics', (req,res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 
 /*

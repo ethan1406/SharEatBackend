@@ -4,27 +4,34 @@
   "description": "A streamlined payment system for restaurants",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node server.js"
+    "start": "babel-node server.js",
+    "dev": "webpack -wd"
   },
   "author": "Ethan Chang",
   "license": "ISC",
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.1.1",
+    "@testing-library/react": "^10.0.1",
+    "@testing-library/user-event": "^10.0.0",
     "eslint": "^4.19.1",
-    "webpack": "^4.16.3",
-    "webpack-cli": "^3.1.0"
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
   },
   "dependencies": {
     "aws-sdk": "^2.255.1",
-    "axios": "^0.19.0",
+    "axios": "0.19.2",
     "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.2.3",
-    "babel-loader": "^7.1.5",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^7",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "bcrypt": "^2.0.1",
     "body-parser": "^1.18.2",
+    "bootstrap": "^4.4.1",
     "connect-flash": "^0.1.1",
+    "cors": "^2.8.5",
+    "css-loader": "^3.4.2",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
@@ -33,20 +40,40 @@
     "mongodb": "^3.0.7",
     "mongoose": "^5.0.16",
     "morgan": "^1.9.0",
+    "node-sass": "^4.13.1",
     "nodemon": "^1.18.3",
     "passport": "^0.4.0",
     "passport-facebook": "^2.1.1",
     "passport-local": "^1.0.0",
+    "path": "^0.12.7",
     "prop-types": "^15.6.2",
     "pusher": "^2.1.3",
     "querystring": "^0.2.0",
-    "react": "^16.4.1",
-    "react-bootstrap": "^0.32.1",
-    "react-dom": "^16.4.1",
-    "react-router-dom": "^4.3.1",
+    "react": "16.13.0",
+    "react-bootstrap": "1.0.0-beta.17",
+    "react-dom": "16.13.0",
+    "react-redux": "^7.2.0",
+    "react-router-dom": "5.1.2",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
     "request": "^2.88.0",
+    "sass-loader": "^8.0.2",
     "stripe": "^6.5.0",
+    "style-loader": "^1.1.3",
     "underscore": "^1.9.2",
     "vhost": "^3.0.2"
-  }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "https://www.shareatpay.com/merchant/analytics"
 }
