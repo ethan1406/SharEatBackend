@@ -188,7 +188,7 @@ router.get('/analytics/:amazonUserSub/:currentTimeStamp', async (req, res, next)
     var analyticsData = {};
 
     try {
-        const {visits, members, transactions, rewards, address, name} = await Merchant.findOne({_id: req.params.amazonUserSub}, 
+        const {visits, members, transactions, rewards, address, name} = await Merchant.findOne({amazonUserSub: req.params.amazonUserSub}, 
                                 'visits members transactions rewards address name')
                                 .exec();
 
