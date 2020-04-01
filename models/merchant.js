@@ -10,6 +10,9 @@ const MerchantSchema = mongoose.Schema({
     userType             : String,
     name         	     : String,
     name_lower           : String,
+    profilepic           : String,
+    omnivore             : {},
+    omnivore_id          : String,
     password             : String,
     address              : String,
     location             : {
@@ -41,6 +44,7 @@ const MerchantSchema = mongoose.Schema({
     }],
     visits: [{
         amazonUserSub: String,
+        partyId: mongoose.Schema.Types.ObjectId,
         time: Date,
         returning: Boolean
     }],

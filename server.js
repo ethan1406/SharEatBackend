@@ -100,10 +100,10 @@ server.get('/analytics', (req,res) => {
 
 */
 // join a table at a restaurant
-server.get('/party/:restaurantId/:tableNumber', async (req, res) => {
+server.get('/party/:restaurant_omnivore_id/:tableNumber', async (req, res) => {
     try {
         const party = await Party.findOne({
-            restaurantId: req.params.restaurantId, 
+            restaurant_omnivore_id: req.params.restaurant_omnivore_id, 
             tableNumber: req.params.tableNumber,
             finished: false
         });
@@ -134,7 +134,7 @@ server.get('/party/:partyId', async (req, res, next) => {
 });
 
 
-server.post('/party/:restaurantId/:tableNumber/:amazonUserSub', async (req, res, next)=> { d
+server.post('/party/:restaurantId/:tableNumber/:amazonUserSub', async (req, res, next)=> {
     Merchant.findOne({_id: req.params.restaurantId}, (err, merchant) => {
         if(err)
         {

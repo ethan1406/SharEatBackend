@@ -15,7 +15,7 @@ router.post('/signup', async (req, res, next) => {
             var newUser = new User();                   
             newUser.email = req.body.email;
             newUser.amazonUserSub = req.body.amazonUserSub;
-            newUser.save();
+            await newUser.save();
             res.status(200).send();
         } else {
             res.status(500).json('User with the id already exists');

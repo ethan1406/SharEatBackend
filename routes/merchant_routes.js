@@ -6,6 +6,8 @@ import Party from '../models/party';
 
 import mongoose from 'mongoose';
 import moment from 'moment';
+import 'moment-timezone';
+
 const _ = require('underscore');
 
 
@@ -73,12 +75,84 @@ router.get('/webhook/omnivore', async (req, res) => {
 
 router.post('/webhook/omnivore', async (req, res, next) => {
     try {
-        const {omnivore} = await Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, 'omnivore').exec();
-        omnivore['data'] = req.body ;
-        omnivore.save();
+        if (req.body.data_type === 'ticket') {
+            const tableNumber = req.body._embedded.ticket._embedded.table.number;
+            const location = req.body._embedded.location;
+            const ticket = req.body._embedded.ticket;
+            const totals = ticket.totals;
+
+            const items = req.body._embedded.ticket._embedded.items;
+            
+            var party = await Party.findOne({restaurant_omnivore_id: location.id, tableNumber: tableNumber}).exec();
+
+            if (party === null) {
+                const itemData = items.reduce( (acc, item) => { 
+                    for (var i = 0; i < item.quantity; i++) {
+                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price});
+                    }
+                    return acc;
+                }, []);
+
+                const data = {
+                    members: [],
+                    restaurant_omnivore_id: location.id,
+                    restaurant_name: location.display_name,
+                    ticket_name: ticket.name,
+                    omnivore_ticket_id: ticket.id,
+                    tableNumber: tableNumber,
+                    finished: false,
+                    time: moment().tz('America/Los_Angeles').format(),
+                    orders: itemData,
+                    orderTotal: totals.total,
+                    sub_total: totals.sub_total,
+                    tax: totals.tax,
+                    guest_count: ticket.guest_count
+                };
+
+                const newParty = new Party(data);
+                await newParty.save();
+            } else {
+                // add to orders if there are new items 
+                const itemData = items.filter(item => {
+                    // check if the id already exists 
+                    var contains = false;
+                    party.orders.forEach(order => {
+                        if (order.id === item.id) {
+                            contains = true;
+                        }
+                    });
+
+                    return !contains;
+                }).reduce((acc, item) => {
+                    for (var i = 0; i < item.quantity; i++) {
+                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price});
+                    }
+                    return acc;
+                }, []);
+
+                party.orders = party.orders.concat(itemData);
+
+                //if the item is no longer there, remove from orders
+                party.orders = party.orders.filter(order => {
+                    var isInTicket = false;
+                    items.forEach(item => {
+                        if(item.id === order.id) {
+                            isInTicket = true;
+                        }
+                    });
+
+                    return isInTicket;
+                });
+
+
+                await party.save();
+            }
+        }
+
+        res.sendStatus(200);
     } catch (err) {
         res.sendStatus(500);
-        next(`Error getting rewards for merchant: ${err.message}`);
+        next(`${err.message}`);
     }
 });
 
