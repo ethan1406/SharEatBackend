@@ -31,11 +31,13 @@ var UserSchema = mongoose.Schema({
         }]
     }],
     cards : [{
+        omnivore_encrypted_data : String,
         last4Digits : Number,
-        token : String,
+        first_name: String,
+        last_name: String,
         type: {type: String},
         selected: Boolean
-    }],
+    }]
 });
 
 // methods ======================

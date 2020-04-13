@@ -4,6 +4,10 @@ import User from '../models/user';
 import Merchant from '../models/merchant';
 import {spreedly} from '../config/auth';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+
+import NodeRSA from 'node-rsa';
 
 const router = express.Router();
 
@@ -73,6 +77,56 @@ router.post('/:amazonUserSub/storeCardToken', async (req, res, next) => {
         next(err.message);
     }
 });
+
+
+router.post('/:amazonUserSub/storeOmnivoreCard', async (req, res, next) => {
+    fs.readFile(path.join(__dirname, '../config/public.key'),'utf8', async (err, data) => {
+        if (err) {
+            res.status(500).json(err);
+            next(err.message);
+            return;
+        }
+        if (req.body.card == undefined) {
+            res.status(500).json('please provide card information');
+            next('no card information provided');
+            return;
+        }
+        if (req.body.cardType == undefined) {
+            res.status(500).json('please provide card type');
+            next('no card type provided');
+            return;
+        }
+
+        const card = req.body.card;
+        const key = new NodeRSA(data,  {encryptionScheme: 'pkcs1', signingScheme: 'pkcs1'});
+        const encrypted = key.encrypt(JSON.stringify(req.body.card), 'base64');
+
+        try {
+            const user = await User.findOne({amazonUserSub: req.params.amazonUserSub}, 'cards').exec();
+
+            user.cards.forEach(card => {
+                card.selected = false;
+            });
+
+            const newCard = {
+                last4Digits: card.number.slice(card.number.length - 4),
+                type: req.body.cardType,
+                omnivore_encrypted_data: encrypted,
+                selected: true
+            };
+
+            user.cards.push(newCard);
+
+            await user.save();
+            res.status(200).json({'card': newCard});
+
+        } catch (err) {
+            res.status(500).json(err);
+            next(err.message);
+        }        
+    });
+});
+
 
 router.get('/:amazonUserSub/getCards', async (req, res, next) => {
     try {
