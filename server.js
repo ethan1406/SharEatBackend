@@ -18,7 +18,7 @@ import subdomain from './routes/api';
 import configAuth from './config/auth';
 import querystring from 'querystring';
 
-import User from './models/user';
+
 import Party from './models/party';
 import Merchant from './models/merchant';
 
@@ -74,19 +74,11 @@ server.use(passport.session());
 server.set('view engine', 'ejs');
 server.use(express.static(path.join(__dirname, 'build')));
 
-var Pusher = require('pusher');
-var pusher = new Pusher({
-  appId: '646223',
-  key: '96771d53b6966f07b9f3',
-  secret: '0175682d7deff09c6ea6',
-  cluster: 'us2',
-  encrypted: true
-});
-
 
 //separating routes
 server.use('/merchant', require('./routes/merchant_routes.js'));
 server.use('/user', require('./routes/user_routes.js'));
+server.use('/party', require('./routes/party_routes.js'));
 
 
 
@@ -95,28 +87,7 @@ server.get('/analytics', (req,res) => {
 });
 
 
-/*
-    Table Logic
 
-*/
-// join a table at a restaurant
-server.get('/party/:restaurant_omnivore_id/:tableNumber', async (req, res) => {
-    try {
-        const party = await Party.findOne({
-            restaurant_omnivore_id: req.params.restaurant_omnivore_id, 
-            tableNumber: req.params.tableNumber,
-            finished: false
-        });
-        if(!party){
-            res.status(404).send('No party is found');
-        } else {
-            res.status(200).send(party);
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(500).send(`Internal error from Mongoose: ${err.message}`);
-    }
-});
 
 server.get('/party/:partyId', async (req, res, next) => {
     try {
@@ -223,88 +194,6 @@ server.post('/order/:partyId/:foodId/:amazonUserSub', async (req, res, next) => 
 });
 
 
-server.post('/order/split', async (req, res, next) => {
-    try {
-        var party = await Party.findOne({_id: req.body.partyId}, ['orders','members']).exec();
-
-        party.orders.forEach((order)=> {
-            if(order._id == req.body.orderId) {
-                //check if the user is already one of the buyers
-                var isBuyer = false;
-                var isFinished = false;
-                var index = -1;
-                var count = 0;
-                order.buyers.forEach((buyer) => {
-                    if(buyer.amazonUserSub === req.body.amazonUserSub) {
-                        isFinished = buyer.finished;
-                        isBuyer = true;
-                        index = count;
-                    }
-                    count++;
-                });
-                
-                if(!isFinished) {
-                    if(!isBuyer) {
-                        order.buyers.push({firstName: req.body.firstName, 
-                            lastName: req.body.lastName, amazonUserSub: req.body.amazonUserSub, finished: false});
-                        
-                        // check if the user is already a member of the party
-                        var isMember = false;
-                        var indexOfMember = -1;
-                        party.members.forEach((member, index) =>{
-                            if(member.amazonUserSub === req.body.amazonUserSub) {
-                                isMember = true;
-                                indexOfMember = index;
-                            }
-                        });
-
-                        if(!isMember) {
-                            party.members.push({amazonUserSub: req.body.amazonUserSub, count: 1, tax: 0, tip: 0});
-                        } else {
-                            party.members[indexOfMember]['count'] = party.members[indexOfMember]['count'] + 1;
-                        }
-                        
-                        party.save();
-                        pusher.trigger(req.body.partyId, 'splitting', {
-                          'add': true,
-                          'isMember': isMember,
-                          'orderId': req.body.orderId,
-                          'firstName': req.body.firstName,
-                          'lastName': req.body.lastName,
-                          'amazonUserSub': req.body.amazonUserSub
-                        });
-                        return res.sendStatus(200);
-                    } else {
-                        order.buyers.splice(index, 1);
-                        // const indexToRemove = party.members.indexOf(req.user._id);
-                        // party.members.splice(indexToRemove, 1);
-                        party.members.forEach(member => {
-                                if(member.amazonUserSub === req.body.amazonUserSub) {
-                                    member.count --;
-                                }
-                            });
-                        party.save(err => {
-                            if(err) {
-                                next(err.message);
-                            }
-                            pusher.trigger(req.body.partyId, 'splitting', {
-                              'add': false,
-                              'orderId': req.body.orderId,
-                              'amazonUserSub': req.body.amazonUserSub
-                            });
-                            return res.status(200).send('user is already one of the buyers');
-                        });
-                        //res.status(500).send('user is already one of the buyers');
-                    }
-                }
-            }
-        });
-
-    } catch (err) {
-        res.status(500).send(`failed to split the order for the user: ${err.message}`);
-        next(`failed to split the order for the user: ${err.message}`);
-    }
-});
 
 
 server.get('/merchant/authorize', (req,res) => {
@@ -393,160 +282,6 @@ server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
 
 
 //create charges
-server.post('/user/makePayment', async (req, res, next) => {
-
-    const {amount, tax, tip, points, restaurantId, partyId} = req.body;
-
-    try {
-        //create charge
-        const merchant = await Merchant.findOne({_id: restaurantId}).exec();
-        const customer = await stripe.customers.retrieve(req.user.stripeCustomerId);
-        const charge = await stripe.charges.create({
-                                  amount: amount,
-                                  currency: 'usd',
-                                  description: 'Example charge',
-                                  customer: req.user.stripeCustomerId,
-                                  source: customer.default_source.id,
-                                  destination: {
-                                    account: merchant.stripeAccountId,
-                                  }
-                             });
-
-        const currentTime = new Date();
-        //push chargeId to merchant's transactions
-
-        var isTransaction = false;
-        var indexOfTransaction = -1;
-        merchant.transactions.forEach((transaction, index) => {
-            if(transaction.partyId.toString() === partyId.toString()) {
-                isTransaction = true;
-                indexOfTransaction = index;
-            }
-        });
-
-        if(!isTransaction) {
-            merchant.transactions.push({
-                 partyId: partyId,
-                    charges: [{
-                        time: currentTime,
-                        chargeId: charge.id,
-                        firstName: req.user.firstName,
-                        lastName: req.user.lastName
-                    }]
-                });
-        } else {
-            merchant.transactions[indexOfTransaction]['charges'].push({
-                time: currentTime,
-                chargeId: charge.id,
-                firstName: req.user.firstName,
-                lastName: req.user.lastName
-            });
-        }
-        merchant.markModified('transactions');
-
-
-        //update party
-        const party = await Party.findOne({_id: partyId}).exec();
-
-        party.orders.forEach(order => {
-            order.buyers.forEach(buyer => {
-                if(buyer.userId.toString() === req.user._id.toString()) {
-                    buyer.finished = true;
-                    party.markModified('orders');
-                }
-            });
-        });
-
-        //push partyId to user's pastOrders, update user's loyalty points
-        var user = await User.findOne({_id: req.user._id}).exec();
-        const restaurant = await Merchant.findOne({_id: restaurantId}).exec();
-
-        var isCustomer = false;
-        user.loyaltyPoints.forEach(loyaltyPoint => {
-            if(loyaltyPoint.restaurantId.toString() === restaurantId.toString()) {
-                isCustomer = true;
-                loyaltyPoint.points = loyaltyPoint.points + points;
-                user.markModified('loyaltyPoints');
-            }
-        });
-        
-        var isPastOrder = false;
-        user.pastOrders.forEach(order => {
-            if(order.partyId.toString() == partyId.toString()) {
-                isPastOrder = true;
-                order.chargeIds.push(charge.id);
-                order.tax += tax;
-                order.tip += tip;
-                user.markModified('pastOrders');
-            }
-        });
-
-        if(!isPastOrder) {
-            user.pastOrders.push({time: currentTime, partyId: partyId, 
-            chargeIds: [charge.id], 
-            restaurantId,
-            tax,
-            tip,
-            restaurantName: restaurant.name,
-            description: restaurant.description,
-            address: restaurant.address});
-        }
-        
-        
-        if(!isCustomer) {
-            user.loyaltyPoints.push({restaurantId, 
-                points: points, 
-                restaurantName: restaurant.name,
-                description: restaurant.description,
-                address: restaurant.address});
-        }
-
-        await user.save();
-        await merchant.save();
-        await party.save();
-        res.status(200).json(charge);
-
-    } catch (err) {
-        res.status(500).json(err.message);
-        next(`Error charging a customer: ${err.message}`);
-    }
-
-});
-
-
-server.post('/party/charge', async (req, res, next) => {
-
-    const {source, partyId} = req.body;
-  //const { source, amount, currency } = req.body;
-    try {
-        const party = await Party.findOne({_id: partyId}).exec();
-        const restaurant = await Merchant.findOne({_id: party.restaurantId}).exec();
-        const charge = await stripe.charges.create({
-            source: source,
-            amount: party.orderTotal,
-            currency: 'usd',
-            customer: party.members[0],
-            description: `charged ${party.members[0]} on behalf of ${restaurant.name}`,
-            statement_descriptor: 'shareat',
-            destination: {
-                amount: party.orderTotal * 0.2,
-                account: restaurant.stripeAccountId
-            }
-        });
-        party.finished = true;
-        party.stripeChargeId = charge.id;
-        party.saved();
-
-        res.send({
-            orders: party.orders
-        });
-        
-
-    } catch(err) {
-        res.sendStatus(500);
-        next(`Error adding token to customer: ${err.message}`);
-    }
-});
 
     
 

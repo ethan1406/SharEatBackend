@@ -5,10 +5,8 @@ import mongoose from 'mongoose';
 // define the schema for our party model
 var PartySchema = mongoose.Schema({
     members        	     : [{
-        amazonUserSub: String, 
-        count: Number,
-        tax: Number,
-        tip: Number
+        amazonUserSub: String,
+        hasPaid: Boolean
     }],
     restaurant_name                  : String,
     restaurant_amazonUserSub         : String,
@@ -17,9 +15,11 @@ var PartySchema = mongoose.Schema({
     ticket_name          : String,
     tableNumber          : Number,
     finished             : Boolean,
-    orderTotal           : Number,
-    sub_total            : Number,
-    tax                  : Number,
+    totals : {
+        total           : Number,
+        sub_total            : Number,
+        tax                  : Number,
+    },
     guest_count           : Number,
     time                 : Date,
     orders               : [{

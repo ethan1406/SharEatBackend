@@ -12,7 +12,6 @@ var UserSchema = mongoose.Schema({
     pastOrders       : [{
         time         : Date,
         partyId      : mongoose.Schema.Types.ObjectId,
-        chargeIds     : [String],
         tax: Number,
         tip: Number,
         restaurantName: String,
@@ -33,8 +32,6 @@ var UserSchema = mongoose.Schema({
     cards : [{
         omnivore_encrypted_data : String,
         last4Digits : Number,
-        first_name: String,
-        last_name: String,
         type: {type: String},
         selected: Boolean
     }]

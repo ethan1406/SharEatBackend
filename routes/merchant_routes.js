@@ -76,14 +76,22 @@ router.get('/webhook/omnivore', async (req, res) => {
 router.post('/webhook/omnivore', async (req, res, next) => {
     try {
         if (req.body.data_type === 'ticket') {
-            const tableNumber = req.body._embedded.ticket._embedded.table.number;
-            const location = req.body._embedded.location;
+
             const ticket = req.body._embedded.ticket;
+
+            if (ticket._embedded.table) {
+                res.send(500).json('Please provide the table number');
+            }
+
+            const tableNumber = ticket._embedded.table.number;
+            const ticketId = ticket.id;
+            const location = req.body._embedded.location;
             const totals = ticket.totals;
 
             const items = req.body._embedded.ticket._embedded.items;
             
-            var party = await Party.findOne({restaurant_omnivore_id: location.id, tableNumber: tableNumber}).exec();
+            var party = await Party.findOne({restaurant_omnivore_id: location.id, omnivore_ticket_id: ticketId}).exec();
+            const merchant = await Merchant.findOne({omnivore_id: location.id}).exec();
 
             if (party === null) {
                 const itemData = items.reduce( (acc, item) => { 
@@ -95,6 +103,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
 
                 const data = {
                     members: [],
+                    restaurantAmazonSub: merchant.amazonUserSub,
                     restaurant_omnivore_id: location.id,
                     restaurant_name: location.display_name,
                     ticket_name: ticket.name,
@@ -103,9 +112,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                     finished: false,
                     time: moment().tz('America/Los_Angeles').format(),
                     orders: itemData,
-                    orderTotal: totals.total,
-                    sub_total: totals.sub_total,
-                    tax: totals.tax,
+                    totals: totals,
                     guest_count: ticket.guest_count
                 };
 
@@ -144,6 +151,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                     return isInTicket;
                 });
 
+                party.totals = totals;
 
                 await party.save();
             }

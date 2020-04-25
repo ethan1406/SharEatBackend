@@ -19,14 +19,11 @@ const MerchantSchema = mongoose.Schema({
         longitude        : Number,
         latitude         : Number
     },
-    menu                 : {
-    },
     transactions: [{
         partyId: mongoose.Schema.Types.ObjectId,
         first_payment_time: Date,
         charges: [{
             time: Date,
-            chargeId: String,
             amazonUserSub: String
         }]
     }],

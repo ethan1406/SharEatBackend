@@ -25,6 +25,13 @@ export const spreedly = {
     spreedlyAddCardURL: 'https://core.spreedly.com/v1/payment_methods'
 };
 
+export const omnivore = {
+    url: 'https://api.omnivore.io/1.0/locations',
+    encryption_key_id: 'Li68KEcL',
+    api_key: '13c73167d0a94d719cbd419aca31dabc'
+};
+
+
 export const stripeKeys = {
     secretKey: 'sk_test_mgtufzoiXQteGddpQ7fuE4MP',
     publishableKey: 'pk_test_x9efkreYwQ5wlmqXXc2paByL',
