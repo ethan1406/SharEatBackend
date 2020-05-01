@@ -14,7 +14,13 @@ router.post('/order/split/check', async (req, res, next) => {
 
     const {amazonUserSub} = req.body;
     if (amazonUserSub === undefined) {
-        res.status(400).json('Please provide a user id');
+        return res.status(400).json('Please provide a user id');
+    }
+    if (req.body.firstName === undefined) {
+        return res.status(400).json('Please provide the first name');
+    }
+    if (req.body.lastName === undefined) {
+        return res.status(400).json('Please provide the last name');
     }
 
     try {
@@ -51,17 +57,16 @@ router.post('/order/split/check', async (req, res, next) => {
                     } else {
                         order.buyers.splice(pos, 1);
                     }
-
-                    pusher.trigger(req.body.partyId, 'splitting', {
-                      orders: party.orders,
-                      members: party.members
-                    });
-
-                    await party.save();
-
-                    return res.sendStatus(200);
                 }
             });
+
+            pusher.trigger(req.body.partyId, 'splitting', {
+              orders: party.orders
+            });
+
+            await party.save();
+
+            return res.sendStatus(200);
         }
 
     } catch (err) {

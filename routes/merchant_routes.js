@@ -8,6 +8,8 @@ import mongoose from 'mongoose';
 import moment from 'moment';
 import 'moment-timezone';
 
+import { pusher } from '../util/Pusher';
+
 const _ = require('underscore');
 
 
@@ -70,17 +72,22 @@ router.get('/getActiveParties', async (req, res, next) => {
 });
 
 router.get('/webhook/omnivore', async (req, res) => {
-    res.status(200).send('ae8e8565be464ad89729828d608cd0b5');
+    res.status(200).send('5d6d1686cae047a597739a4dcb100082');
 });
 
 router.post('/webhook/omnivore', async (req, res, next) => {
+    
+    if (req.headers['access-token'] != 'omnivore') {
+        return res.sendStatus(403);
+    }
+
     try {
         if (req.body.data_type === 'ticket') {
 
             const ticket = req.body._embedded.ticket;
 
-            if (ticket._embedded.table) {
-                res.send(500).json('Please provide the table number');
+            if (ticket._embedded.table === undefined) {
+                return res.status(500).json('Please provide the table number');
             }
 
             const tableNumber = ticket._embedded.table.number;
@@ -103,7 +110,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
 
                 const data = {
                     members: [],
-                    restaurantAmazonSub: merchant.amazonUserSub,
+                    restaurantAmazonUserSub: merchant.amazonUserSub,
                     restaurant_omnivore_id: location.id,
                     restaurant_name: location.display_name,
                     ticket_name: ticket.name,
@@ -152,6 +159,11 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                 });
 
                 party.totals = totals;
+
+                pusher.trigger(party._id.toString(), 'orders_changed', {
+                    orders: party.orders,
+                    totals: totals
+                });
 
                 await party.save();
             }

@@ -12,15 +12,16 @@ var UserSchema = mongoose.Schema({
     pastOrders       : [{
         time         : Date,
         partyId      : mongoose.Schema.Types.ObjectId,
+        chargeIds     : [String],
+        subTotal: Number,
         tax: Number,
         tip: Number,
         restaurantName: String,
         restaurantId: String,
-        description: String,
         address: String,
     }],
     loyaltyPoints    : [{
-        restaurantId: mongoose.Schema.Types.ObjectId,
+        restaurantAmazonUserSub: String,
         restaurantName: String,
         description: String,
         address: String,
