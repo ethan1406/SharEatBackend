@@ -1,6 +1,5 @@
 import config from './config';
 //import path from 'path';
-import request from 'request';
 import morgan from 'morgan';
 import express from 'express';
 import session from 'express-session';
@@ -8,18 +7,15 @@ import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import path from 'path';
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
+import jwkToPem from 'jwk-to-pem';
+
 //import sassMiddleware from 'node-sass-middleware';
 import passport from 'passport';
 import flash from 'connect-flash';
 
-//handling subdomains
-import vhost from 'vhost';
-import subdomain from './routes/api';
-import configAuth from './config/auth';
-import querystring from 'querystring';
+import {jsonWebKeys} from './config/auth';
 
-
-import Party from './models/party';
 import Merchant from './models/merchant';
 
 
@@ -75,6 +71,76 @@ server.set('view engine', 'ejs');
 server.use(express.static(path.join(__dirname, 'build')));
 
 
+
+function decodeTokenHeader(token, reject) {
+    try {
+        const [headerEncoded] = token.split('.');
+        const buff = new Buffer(headerEncoded, 'base64');
+        const text = buff.toString('ascii');
+        const header =  JSON.parse(text);
+        return header;
+    } catch (err) {
+        reject(err);
+    }
+    
+}
+
+function getJsonWebKeyWithKID(kid) {
+    for (let jwk of jsonWebKeys) {
+        if (jwk.kid === kid) {
+            return jwk;
+        }
+    }
+    return null;
+}
+
+function validateToken(token) {
+
+    return new Promise((resolve, reject) => {
+        const header = decodeTokenHeader(token, reject); 
+        const jsonWebKey = getJsonWebKeyWithKID(header.kid);
+
+        if(jsonWebKey === null) {
+            reject('no key matched');
+        }
+
+        const pem = jwkToPem(jsonWebKey);
+
+        try {
+            const decoded = jwt.verify(token, pem, {algorithms: ['RS256']});
+            resolve(decoded);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+
+server.all('/*', async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader=== undefined) {
+        return res.status(401).send('Please provide a valid user token');
+    }
+
+    var token;
+    if (authHeader.startsWith('Bearer ')){
+        token = authHeader.substring(7, authHeader.length);
+    } else {
+        return res.status(401).send('Please provide a valid user token');
+    }
+
+    try {
+        const decoded = await validateToken(token);
+        console.log(decoded);
+        next();
+    } catch (err) {
+        console.log(err);
+        return res.status(401).send('user is not authorized');
+    }
+
+});
+
 //separating routes
 server.use('/merchant', require('./routes/merchant_routes.js'));
 server.use('/user', require('./routes/user_routes.js'));
@@ -82,203 +148,9 @@ server.use('/party', require('./routes/party_routes.js'));
 
 
 
-server.get('/analytics', (req,res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
-
-
-
-server.get('/party/:partyId', async (req, res, next) => {
-    try {
-        const party = await Party.findOne({_id: req.params.partyId});
-        if(!party) {
-            res.status(404).send('No party is found');
-        } else {
-            res.status(200).send(party);
-        }
-    } catch (err) {
-        res.status(500).send(`Internal error from Mongoose: ${err.message}`);
-        next(err);
-    }
-    
-});
-
-
-server.post('/party/:restaurantId/:tableNumber/:amazonUserSub', async (req, res, next)=> {
-    Merchant.findOne({_id: req.params.restaurantId}, (err, merchant) => {
-        if(err)
-        {
-            console.log('table join merchant error: ' + err);
-        }
-
-        if(!merchant)
-        {
-            console.log('no merchant by the id exists');
-            return res.send({ status : -1, message: 'no merchant by the id exists'});
-        }
-        else
-        {
-            Party.findOne({restaurantId: req.params.restaurantId, tableNumber: req.params.tableNumber}, (err, party) => {
-                if(err)
-                {
-                    console.log('table join party error: ' + err);
-                }
-                if(party)
-                {
-                    party.members.push(req.params.amazonUserSub);
-
-                    party.save((err) => {
-                        if(err)
-                        {
-                            console.log('failed to save a party member" ' + err);
-                        }
-                        return res.send({ status : 0, partyId: party._id});
-                    });
-                }
-                else
-                {
-                    var newParty = new Party(); 
-                    newParty.members.push(req.params.amazonUserSub);
-                    newParty.restaurantId = req.params.restaurantId;
-                    newParty.finished = false;
-                    newParty.tableNumber = req.params.tableNumber;
-                    newParty.time = Date.now();
-                    newParty.orderTotal = 10;
-                    newParty.save((err) => {
-                        if(err)
-                        {
-                            console.log('failed to save a new party: " ' + err);
-                        }
-                        return res.send({ status : 0, partyId: newParty._id});
-                    });
-                }
-                
-            });
-        }
-    });
-    
-});
-
-server.post('/order/:partyId/:foodId/:amazonUserSub', async (req, res, next) => {
-    try {
-        const party = await Party.findOne({_id: req.params.partyId}).exec();
-        const restaurant = await Merchant.findOne({_id: party.restaurantId}, 'menu').exec();
-        var price = 0;
-        Object.entries(restaurant.menu).forEach(([category, items]) => {
-            items.forEach(item => {
-                if (item.foodId == req.params.foodId) {
-                    price = item.price;
-                }
-            });
-        });
-        party.orderTotal += price;
-        party.orders.push({foodId : req.params.foodId, buyers:[req.params.amazonUserSub]});
-        
-        party.save((err, order) =>{
-            if(err)
-            {
-                res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
-                next(`failed to add a new order to the orders: ${err.message}`);
-            }
-            const orderId = order._id;
-            return res.status(500).send({orderId});
-        });
-
-    } catch (err) {
-        res.status(500).send(`failed to add a new order to the orders: ${err.message}`);
-        next(`failed to add a new order to the orders: ${err.message}`);
-
-    }
-
-});
-
-
-
-
-server.get('/merchant/authorize', (req,res) => {
-    //Generate a random string as state to protect from CSRF and place it in the session.
-    req.session.state = Math.random().toString(36).slice(2);
-    // Prepare the mandatory Stripe parameters.
-    let parameters = {
-        redirect_uri:'https://www.shareatpay.com/merchant/token',
-        client_id: configAuth.stripe.clientId,
-        state: req.session.state
-    };
-    // Optionally, Stripe Connect accepts `first_name`, `last_name`, `email`,
-    // and `phone` in the query parameters for them to be autofilled.
-    parameters = Object.assign(parameters, {
-        // 'stripe_user[business_type]': req.user.type || 'individual',
-        // 'stripe_user[first_name]': req.user.firstName || undefined,
-        // 'stripe_user[last_name]': req.user.lastName || undefined,
-        'stripe_user[email]': 'qinwest@gmail.com',
-        
-    });
-    // Redirect to Stripe to start the Connect onboarding.
-    res.redirect(configAuth.stripe.authorizeUri + '?' + querystring.stringify(parameters));
-});
-
-
-/**
- * GET /pilots/stripe/token
- *
- * Connect the new Stripe account to the platform account.
- */
-server.get('/merchant/token', async (req, res) => {
-    // Check the state we got back equals the one we generated before proceeding.
-    if (req.session.state != req.query.state) {
-        res.redirect('/merchant/dashboard');
-    }
-    // Post the authorization code to Stripe to complete the authorization flow.
-    request.post(configAuth.stripe.tokenUri, {
-        form: {
-            grant_type: 'authorization_code',
-            client_id: configAuth.stripe.clientId,
-            client_secret: configAuth.stripe.secretKey,
-            code: req.query.code
-        },
-            json: true
-    }, (err, response, body) => {
-        console.log(body);
-        if (err || body.error) {
-          console.log('The Stripe onboarding process has not succeeded.');
-        } else {
-          // Update the model and store the Stripe account ID in the datastore.
-          // This Stripe account ID will be used to pay out to the merchant.
-            Merchant.findOne({_id: '5b346f48d585fb0e7d3ed3fc'}, (err, merchant) => {
-                merchant.stripeAccountId = body.stripe_user_id;
-                merchant.save();
-            });
-        }
-        // Redirect to the final stage.
-        res.redirect('/merchant/dashboard');
-    });
-});
-
-
-/**
- * POST /api/passengers/me/ephemeral_keys
- *
- * Generate an ephemeral key for the logged in customer.
- */
-server.post('/customer/me/ephemeral_keys', async (req, res, next) => {
-    const apiVersion = req.query.api_version;
-    console.log(apiVersion);
-    try {
-    // Create ephemeral key for customer.
-        const ephemeralKey = await stripe.ephemeralKeys.create({
-            customer: req.user.stripeCustomerId
-        }, {
-            stripe_version: apiVersion
-        });
-        // Respond with ephemeral key.
-        res.send(ephemeralKey);
-    } catch (err) {
-        res.sendStatus(500);
-        next(`Error creating ephemeral key for customer: ${err.message}`);
-    }
-});
-
+// server.get('/analytics', (req,res) => {
+//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// });
 
 
 //create charges
@@ -311,7 +183,6 @@ server.get('/user', (req, res) =>
 
 
 server
-.use(vhost('api.shareatpay.com', subdomain.app))
 .listen(config.port, () => {
   console.info('Express listening on port', config.port);
 });
