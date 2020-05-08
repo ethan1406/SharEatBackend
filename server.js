@@ -117,6 +117,11 @@ function validateToken(token) {
 
 
 server.all('/*', async (req, res, next) => {
+    if (req.url === '/merchant/webhook/omnivore') {
+        next();
+        return;
+    }
+    
     const authHeader = req.headers.authorization;
 
     if (authHeader=== undefined) {
@@ -132,7 +137,6 @@ server.all('/*', async (req, res, next) => {
 
     try {
         const decoded = await validateToken(token);
-        console.log(decoded);
         next();
     } catch (err) {
         console.log(err);

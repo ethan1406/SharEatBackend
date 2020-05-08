@@ -30,7 +30,6 @@ router.post('/signup', async (req, res, next) => {
             res.status(200).send();
         } else {
             res.status(500).json('User with the id already exists');
-            next();
         }
     } catch(err) {
         res.status(500).json(err.message);
@@ -233,6 +232,8 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
                 defaultPaymentCard = card;
             }
         });
+
+        console.log('here1');
         
         await axios.post(`${omnivore.url}/${restaurantOmnivoreId}/tickets/${ticketId}/payments`,
                 {amount: subTotal + tax, tip: tip, type: 'card_not_present',
@@ -244,6 +245,8 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
                 {headers: {
                     'Api-Key': omnivore.api_key
                 }});
+
+        console.log('here2');
 
 
         res.sendStatus(200);
@@ -258,6 +261,8 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
                 isReturning = true;
             }
         });
+
+        console.log('here3');
 
         const currentTime =  moment().tz('America/Los_Angeles').format();
 
@@ -331,7 +336,8 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
             }
         });
 
-        pusher.trigger(partyId, '{payment_complete}', {
+        pusher.trigger(partyId, 'payment_complete', {
+          'members': party.members,  
           'orders': party.orders
         });
 
