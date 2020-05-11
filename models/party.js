@@ -19,6 +19,9 @@ var PartySchema = mongoose.Schema({
         total           : Number,
         sub_total            : Number,
         tax                  : Number,
+        other_charges        : Number,
+        service_charges      : Number,
+        discounts            : Number
     },
     guest_count           : Number,
     time                 : Date,
