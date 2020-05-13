@@ -121,10 +121,10 @@ server.all('/*', async (req, res, next) => {
         next();
         return;
     }
-    
+
     const authHeader = req.headers.authorization;
 
-    if (authHeader=== undefined) {
+    if (authHeader === undefined) {
         return res.status(401).send('Please provide a valid user token');
     }
 

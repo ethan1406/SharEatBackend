@@ -78,7 +78,7 @@ router.post('/order/split/check', async (req, res, next) => {
 
 
 // join a table at a restaurant
-router.post('/:restaurant_omnivore_id/:omnivore_ticket_id', async (req, res) => {
+router.post('/:restaurant_omnivore_id/:table_number', async (req, res) => {
 
     const {amazonUserSub} = req.body;
     if (amazonUserSub === undefined) {
@@ -88,7 +88,7 @@ router.post('/:restaurant_omnivore_id/:omnivore_ticket_id', async (req, res) => 
     try {
         const party = await Party.findOne({
             restaurant_omnivore_id: req.params.restaurant_omnivore_id, 
-            omnivore_ticket_id: req.params.omnivore_ticket_id,
+            tableNumber: req.params.table_number,
             finished: false
         });
 
