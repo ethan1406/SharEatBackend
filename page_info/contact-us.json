@@ -1,0 +1,19 @@
+{
+	"sections": [
+		{
+			"header": "",
+			"paragraph": [
+				{"content": "Last Updated: May 20, 2020", "type": "info"},
+				{"type": "info", "content": "We strive to make the best user experience. Please contact us for anything. For customer issues, we will fix them right away. Feedback/Feature requests will be greatly appreciated."}
+			]
+		},
+		{
+			"header": "Contact Info",
+			"paragraph": [
+				{"type": "bullet", "content":"Phone. 626-400-3067"},
+				{"type": "bullet", "content":"Email. shareateam@gmail.com"},
+				{"type": "bullet", "content":"Address. 2392 Olive St., Los Angeles CA 90015"}
+			]
+		}	
+	]
+}

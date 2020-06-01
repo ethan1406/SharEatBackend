@@ -1,6 +1,8 @@
 import express from 'express';
 import Party from '../models/party';
+import {omnivore} from '../config/auth';
 
+import axios from 'axios';
 import { pusher } from '../util/Pusher';
 
 const router = express.Router();
@@ -119,6 +121,24 @@ router.post('/:restaurant_omnivore_id/:table_number', async (req, res) => {
     } catch (err) {
         console.log(err);
         res.status(500).send(`Internal error: ${err.message}`);
+    }
+});
+
+router.get('/remainder', async (req, res) => {
+    const {restaurantOmnivoreId, ticketId} = req.body;
+
+    try {
+        const {data} = await axios.get(`${omnivore.url}/${restaurantOmnivoreId}/tickets/${ticketId}`,
+                {},
+                {headers: {
+                    'Api-Key': omnivore.api_key
+                }});
+
+        return res.status(200).json({due: data.totals.due});
+
+    } catch(err) {
+        console.log(err);
+        return res.status(500).send(err);
     }
 });
 

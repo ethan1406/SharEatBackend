@@ -71,9 +71,6 @@ router.get('/getActiveParties', async (req, res, next) => {
     }
 });
 
-router.get('/webhook/omnivore', async (req, res) => {
-    res.status(200).send('5d6d1686cae047a597739a4dcb100082');
-});
 
 router.post('/webhook/omnivore', async (req, res, next) => {
     
@@ -83,7 +80,6 @@ router.post('/webhook/omnivore', async (req, res, next) => {
 
     try {
         if (req.body.data_type === 'ticket') {
-
             const ticket = req.body._embedded.ticket;
 
             if (ticket._embedded.table === undefined) {
@@ -94,6 +90,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
             const ticketId = ticket.id;
             const location = req.body._embedded.location;
             const totals = ticket.totals;
+            const service_charges = ticket._embedded.service_charges;
 
             const items = req.body._embedded.ticket._embedded.items;
             
@@ -101,12 +98,26 @@ router.post('/webhook/omnivore', async (req, res, next) => {
             const merchant = await Merchant.findOne({omnivore_id: location.id}).exec();
 
             if (party === null) {
-                const itemData = items.reduce( (acc, item) => { 
+                var itemData = items.reduce( (acc, item) => { 
                     for (var i = 0; i < item.quantity; i++) {
-                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price});
+                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price/item.quantity});
                     }
                     return acc;
                 }, []);
+
+                if (service_charges != undefined && service_charges.length != 0) {
+                    service_charges.forEach( item => {
+                        itemData.push({id: item.id, name: item.name, buyers: [], price: item.price});
+                    });
+                }
+
+                if (totals.other_charges != 0) {
+                    itemData.push({id: 'others', name: 'Other Charges', buyers: [], price: totals.other_charges});
+                }
+
+                if (totals.discounts != 0) {
+                    itemData.push({id: 'discounts', name: 'Discounts', buyers: [], price: -totals.discounts});
+                }
 
                 const data = {
                     members: [],
@@ -127,7 +138,7 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                 await newParty.save();
             } else {
                 // add to orders if there are new items 
-                const itemData = items.filter(item => {
+                var modifiedItems = items.filter(item => {
                     // check if the id already exists 
                     var contains = false;
                     party.orders.forEach(order => {
@@ -139,12 +150,55 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                     return !contains;
                 }).reduce((acc, item) => {
                     for (var i = 0; i < item.quantity; i++) {
-                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price});
+                        acc.push({id: item.id, name: item.name, buyers: [], price: item.price/item.quantity});
                     }
                     return acc;
                 }, []);
 
-                party.orders = party.orders.concat(itemData);
+                if (service_charges != undefined && service_charges.length != 0) {
+                    const newServiceCharges = service_charges.filter(item => {
+                        // check if the id already exists 
+                        var contains = false;
+                        party.orders.forEach(order => {
+                            if (order.id === item.id) {
+                                contains = true;
+                            }
+                        });
+                        return !contains;
+                    }).map(item => { return {id: item.id, name: item.name, buyers: [], price: item.price};});
+
+                    modifiedItems = modifiedItems.concat(newServiceCharges);
+                }
+
+                if (totals.other_charges != 0) {
+                    var isInOrders = false;
+                    party.orders.forEach(order => {
+                        if (order.id === 'others') {
+                            order.price = totals.other_charges;
+                            isInOrders = true;
+                        }
+                    });
+
+                    if (!isInOrders) {
+                        modifiedItems.push({id: 'others', name: 'Other Charges', buyers: [], price: totals.other_charges});
+                    }
+                }
+
+                if (totals.discounts != 0) {
+                    var isInOrder = false;
+                    party.orders.forEach(order => {
+                        if (order.id === 'discounts') {
+                            order.price = -totals.discounts;
+                            isInOrder = true;
+                        }
+                    });
+
+                    if (!isInOrder) {
+                        modifiedItems.push({id: 'discounts', name: 'Discounts', buyers: [], price: -totals.discounts});
+                    }
+                }
+
+                party.orders = party.orders.concat(modifiedItems);
 
                 //if the item is no longer there, remove from orders
                 party.orders = party.orders.filter(order => {
@@ -154,6 +208,22 @@ router.post('/webhook/omnivore', async (req, res, next) => {
                             isInTicket = true;
                         }
                     });
+
+                    if(service_charges != undefined && service_charges.length != 0) {
+                        service_charges.forEach(item => {
+                            if(item.id === order.id) {
+                                isInTicket = true;
+                            }
+                        });
+                    }
+
+                    if(order.id === 'others' && totals.other_charges != 0) {
+                        isInTicket = true;
+                    }
+
+                    if(order.id === 'discounts' && totals.discounts != 0) {
+                        isInTicket = true;
+                    }
 
                     return isInTicket;
                 });

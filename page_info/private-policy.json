@@ -1,0 +1,228 @@
+{
+	"sections": [{
+			"header": "",
+			"paragraph": [{
+					"content": "Last Updated: March 20, 2020",
+					"type": "info"
+				},
+				{
+					"type": "info",
+					"content": "Your trust is important to us and we are committed to protecting the security and privacy of your information. The information that’s shared with Shareat is only used to help create a better experience. This Privacy Policy describes our privacy practices for all websites and applications. This Privacy Policy describes how we collect, process, use and disclose your information provided to us."
+				}
+			]
+		},
+		{
+			"header": "1. The Scope of This Policy",
+			"paragraph": [{
+				"type": "info",
+				"content": "This policy applies to all Shareat users, including restaurant goers (“Eaters”) and restaurants (“Merchants”), and to all Shareat platforms and services, including our mobile applications and websites."
+			}]
+		},
+		{
+			"header": "2. The information We Collect",
+			"paragraph": [{
+				"type": "info",
+				"content": "When you use the Shareat Platform, there are generally two categories of information we collect"
+			}],
+			"sections": [{
+					"header": "2.1 Information You Provide to Us ",
+					"paragraph": [{
+							"type": "info",
+							"content": "We ask for and collect the following personal information about you when you use the Shareat Platform. This information is necessary for the performance of the contract between you and us. We may not be able to provide you with all the requested services without this information."
+						},
+						{
+							"type": "bullet",
+							"content": "Account Information. When you sign up for a Shareat account, we collect the information you provide us, such as your first name, last name and email address."
+						},
+						{
+							"type": "bullet",
+							"content": "Payment Information. We may require you to provide certain financial information (like your credit card information) in order to facilitate the processing of payments from Eaters to Merchants."
+						}
+					]
+				},
+				{
+					"header": "2.2 Information We Collect When You Use the Shareat Platform ",
+					"paragraph": [{
+							"type": "bullet",
+							"content": "Usage Information. We collect information about your use of Shareat’s services, including when you visit, redeem rewards and complete orders at Merchants . We also collect your interactions with Shareat apps and websites, including date and time of use, and pages or content you view."
+						},
+						{
+							"type": "bullet",
+							"content": "Transaction Information. In order for each transaction to be completed, we may collect certain information, including payment method details, order details, amounts charged, date and time of the transaction, and the identity of each Eater who was involved in bill-splitting."
+						},
+						{
+							"type": "bullet",
+							"content": "Device Information. Shareat automatically collects device information when you access and use the Shareat Platform. That information includes, but is not limited to, details about how you’ve used the Shareat Platform, access dates and times, hardware and software information, device information, crash data, cookie data."
+						},
+						{
+							"type": "bullet",
+							"content": "SDKs. Third parties, including Facebook, may use cookies and other storage technologies to collect information from our applications. If you choose to create a Shareat account with these third parties, they may collect or receive information from your app and use that information to provide measurement services and targeted ads. Users can opt-out of the collection of information by Facebook by updating their Facebook account ad settings."
+						}
+					]
+				}
+			]
+		},
+		{
+			"header": "3. How We Use the Information We Collect",
+			"paragraph": [{
+					"type": "info",
+					"content": "We use your information to "
+				},
+				{
+					"type": "bullet",
+					"content": "Provide and improve the Shareat Platform;"
+				},
+				{
+					"type": "bullet",
+					"content": "Create and maintain a safe and secure platform;"
+				},
+				{
+					"type": "bullet",
+					"content": "Provide customer support;"
+				},
+				{
+					"type": "info",
+					"content": ""
+				},
+				{
+					"type": "bullet",
+					"content": "Providing and Improving the Shareat Platform. We use your personal information to provide an efficient and intuitive experience on the Shareat Platform. To do this, we use your personal information to:"
+				},
+				{
+					"type": "bullet",
+					"content": "Verify your identity and maintain your account, settings and preferences;"
+				},
+				{
+					"type": "bullet",
+					"content": "Enable you to communicate with other Eaters and Merchants;"
+				},
+				{
+					"type": "bullet",
+					"content": "Allow Eaters and Merchants to connect regarding their payment transactions and reward collections"
+				},
+				{
+					"type": "info",
+					"content": ""
+				},
+				{
+					"type": "bullet",
+					"content": "Creating and Maintaining a Safe and Secure Platform. Providing you a secure and safe experience on the Shareat Platform such as to:"
+				},
+				{
+					"type": "bullet",
+					"content": "Authenticate users;"
+				},
+				{
+					"type": "bullet",
+					"content": "Resolve any disputes with any of our Members;"
+				},
+				{
+					"type": "bullet",
+					"content": "Block unsafe or fraudulent users from the Shareat Platform"
+				},
+				{
+					"type": "info",
+					"content": ""
+				},
+				{
+					"type": "bullet",
+					"content": "Providing Customer Support. We are committed to customer service and work hard to ensure that you have the best experience possible. To do this, we use your information to :"
+				},
+				{
+					"type": "bullet",
+					"content": "Provide you support or respond to you"
+				},
+				{
+					"type": "bullet",
+					"content": "Assist you in resolving questions or issues you have regarding the Shareat Platform"
+				},
+				{
+					"type": "info",
+					"content": ""
+				}
+			]
+		},
+		{
+			"header": "4. How We Share Your Information",
+			"paragraph": [{
+					"type": "bullet",
+					"content": "Check Splitting between Shareat Eaters. To help facilitate check splitting or other interactions between Eaters, we may need to share certain information, including first name and last name. If Eaters are eating at the same table, when they scan the QR code at the table to pull up the check, they will be able to see each other’s first name and last name. We don’t share your billing and payout information with other Members."
+				},
+				{
+					"type": "info",
+					"content": ""
+				},
+				{
+					"type": "bullet",
+					"content": "Visiting, completing transactions and redeeming rewards at Merchants. When you visit, complete and order or redeem rewards at a Merchant, the information is collected at mass and shared with the Merchant, but is disassociated from personal identifiers. This information is used to provide the Merchant mass analytics to help them measure their performance."
+				},
+				{
+					"type": "info",
+					"content": ""
+				}
+			]
+		},
+		{
+			"header": "4. Your Rights Regarding Your Data",
+			"paragraph": [{
+					"type": "info",
+					"content": "Shareat provides ways for you to access and delete your personal information and exercise other data rights."
+				},
+				{
+					"type": "bullet",
+					"content": "Push Notification. You can opt out of receiving push notifications through your device settings"
+				},
+				{
+					"type": "bullet",
+					"content": "Profile Information. You can edit account information you have added to your profile by logging in to your account settings and profile."
+				},
+				{
+					"type": "bullet",
+					"content": "Deleting Your Account. If you would like to delete your Shareat account, you can request to have all your personal information deleted entirely."
+				}
+			],
+			"sections": [{
+				"header": "5.1 California Privacy Rights ",
+				"paragraph": [{
+						"type": "info",
+						"content": "The California Consumer Privacy Act provides some California residents with additional rights. The Act permits Users who are California residents to request and obtain from us once a year, free of charge, a list of the third parties to whom we have disclosed their personal information, if any (Shareat does not sell personal information to third parties). As an User, you have the right to know and see what data we have collected about you over the previous year, including:"
+					},
+					{
+						"type": "bullet",
+						"content": "The categories of personal information we have collected about you;"
+					},
+					{
+						"type": "bullet",
+						"content": "The categories of sources from which the personal information is collected;"
+					},
+					{
+						"type": "bullet",
+						"content": "The categories of third parties with whom we have shared your personal information;"
+					},
+					{
+						"type": "info",
+						"content": ""
+					},
+					{
+						"type": "info",
+						"content": "Response Timing. We aim to respond to a User request for access within 5 days of receiving that request. If we require more time, we will inform you."
+					}
+				]
+			}]
+		},
+		{
+			"header": "6. Children's Data",
+			"paragraph": [{
+				"type": "info",
+				"content": "Our websites and applications are not directed to children under 16. We do not knowingly or intentionally collect any personal  information directly from children under 16. By using the Sharet App, you represent and warrant to us that you are at least 16 or older. "
+			}]
+		},
+		{
+			"header": "7. Changes to This Private Policy",
+			"paragraph": [{
+				"type": "info",
+				"content": "We may update this policy from time to time as the Shareat Platform grows and privacy law changes. If we update our policy, we will do so online. However, if we make major changes, we will let you know through the Shareat Platform orby email. When you use Shareat, you are agreeing to the most recent terms of this policy"
+			}]
+		}
+	]
+}

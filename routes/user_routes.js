@@ -8,6 +8,9 @@ import { pusher } from '../util/Pusher';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import policy from '../page_info/private-policy.json';
+import terms from '../page_info/terms-of-use.json';
+import contact from '../page_info/contact-us.json';
 
 import mongoose from 'mongoose';
 
@@ -209,18 +212,32 @@ router.get('/:amazonUserSub/getRewards', async (req, res) => {
 
 router.get('/private-policy', async (req, res) => {
     try {
-        const restaurantId = req.query.restaurantId;
-        const merchant = await Merchant.findOne({_id: restaurantId}).exec();
-        res.status(200).json(merchant);
+        res.status(200).json(policy);
     } catch(err) {
-        console.log(`error when getting merchant info: ${err.message}`);
+        res.sendStatus(500);
+    }
+});
+
+router.get('/terms-of-use', async (req, res) => {
+    try {
+        res.status(200).json(terms);
+    } catch(err) {
+        res.sendStatus(500);
+    }
+});
+
+router.get('/contact-us', async (req, res) => {
+    try {
+        res.status(200).json(contact);
+    } catch(err) {
         res.sendStatus(500);
     }
 });
 
 
 router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
-    const {subTotal, tip, tax, points, ticketId, restaurantOmnivoreId, partyId, restaurantAmazonUserSub} = req.body;
+    const {subTotal, tip, tax, points,
+        ticketId, restaurantOmnivoreId, partyId, restaurantAmazonUserSub} = req.body;
 
     const userSub = req.params.amazonUserSub;
 
@@ -233,9 +250,7 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
             }
         });
 
-        console.log('here1');
-        
-        await axios.post(`${omnivore.url}/${restaurantOmnivoreId}/tickets/${ticketId}/payments`,
+        const response = await axios.post(`${omnivore.url}/${restaurantOmnivoreId}/tickets/${ticketId}/payments`,
                 {amount: subTotal + tax, tip: tip, type: 'card_not_present',
                     card_info: {
                         encrypted_data: defaultPaymentCard.omnivore_encrypted_data,
@@ -245,11 +260,6 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
                 {headers: {
                     'Api-Key': omnivore.api_key
                 }});
-
-        console.log('here2');
-
-
-        res.sendStatus(200);
 
 
         const merchant = await Merchant.findOne({amazonUserSub: restaurantAmazonUserSub}).exec();
@@ -261,8 +271,6 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
                 isReturning = true;
             }
         });
-
-        console.log('here3');
 
         const currentTime =  moment().tz('America/Los_Angeles').format();
 
@@ -345,15 +353,23 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
         await merchant.save();
         await user.save();
         await party.save();
+
+        return res.sendStatus(200);
         
     } catch (err) {
-        if (err.response.status == 400) {
-            if (err.response.data.errors[0].error === 'card_already_tendered') {
-                res.status(500).json('card has already been charged for this ticket');
+        if (err.response != undefined) {
+            if (err.response.status == 400) {
+                if (err.response.data.errors[0].error === 'card_already_tendered') {
+                    return res.status(500).json('card has already been charged for this ticket');
+                }
+                return res.status(400).send(err);
+            } else if (err.response.status == 503) {
+                return res.status(503).json('Location not available - agent offline');
             }
-        } else {
-            res.sendStatus(500);
         }
+         
+        return res.status(500).send(err);
+        
     }
 
 });

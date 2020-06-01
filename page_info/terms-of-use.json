@@ -1,0 +1,89 @@
+{
+	"sections": [
+		{
+			"header": "",
+			"paragraph": [
+				{"content": "Last Updated: March 18, 2020", "type": "info"},
+				{"type": "info", "content": "Welcome to Shareat. These terms of use constitute a contract(the 'Agreement') between you and Shareat, governing your use of the Shareat mobile application and website (collectively, the “Shareat Platform”). By entering into this Agreement, or by accessing the Shareat Platform, you acknowledge that you understand and accept all of the terms of this Agreement. If you do not agree to the terms and conditions of this Agreement, you may not access or use the Shareat Platform."}
+			]
+		},
+		{
+			"header": "1. The Shareat Platform",
+			"paragraph": [
+				{"type": "info", "content":"The Shareat Platform provides persons that eat at restaurants the ability to pay, split and collect rewards via their mobile phones. Restaurants are referred to herein as “Merchants” while persons that enjoy the services provided by merchants are referred to as “Eater” and “Eaters.” Collectively, they are referred to as “Users.” Through the Shareat Platform, eaters can access merchants services. Shareat itself is not a restaurant or food service provider and does not own or control any of the restaurants available on the Shareat Platform. Shareat is not responsible for the safety, preparation or quality of any meals offered by its Merchants."}
+			]
+		},
+		{
+			"header": "2. Charges",
+			"paragraph": [
+				{"type": "info", "content": "As an eater, you understand that by choosing to pay merchants through the Shareat application results in charges to you ('Charges'). Charges include the following:"},
+				{"type": "bullet", "content": "Prices. The prices of the food will be the same as the ones on the menu. "},
+				{"type": "bullet", "content":"Taxes. Shareat will collect restaurant tax or other taxes required by law."},
+				{"type": "bullet", "content":"Tips. You may elect to tip through the Shareat application. Any tips will be provided directly to the server for the Merchant.  The Merchant  may add a required minimum gratuity charge. You acknowledge that Shareat does not determine nor dictate the Merchant’s mandated tip or gratuity amount and you hereby agree to pay the minimum amount set forth by the Merchant. "},
+				{"type": "info", "content":"If you are a Merchant, Shareat charges you a flat monthly fee of 99 dollars."}
+			],
+			"sections": [
+				{
+					"header": "2.1 Refunds and Disputes ",
+					"paragraph": [
+						{"type": "info", "content":"Shareat does not charge the Eater for any services. You, the Eater, are solely responsible for any transactions or disputes you may have with the Merchant, as well as your Financial Service Provider. Shareat does not, in any way, hold responsibility for refund and disputes between you, the Eater and an Merchant, another User, or the Financial Institution."}
+					]
+				},
+				{
+					"header": "2.2 Facilitation of Charges ",
+					"paragraph": [
+						{"type": "info", "content":"All charges are facilitated through a third-party POS integration company (Omnivore). Shareat exercises no control over Omnivore and is not responsible for error by Omnivore. By processing a transaction via the Shareat App, you authorize Omnivore to facilitate charges on your credit card or other payment method. Transactions processed via Shareat may also be subject to the terms and conditions of the Payment Vendor."}
+					]
+				},
+				{
+					"header": "2.3 Coupons ",
+					"paragraph": [
+						{"type": "info", "content":"As an eater, you may receive coupons that you can redeem from the Merchant on the Shareat Platform. Coupons are only valid for use on the Shareat Platform, and are not transferable or redeemable for cash. There are two types of coupons."},
+						{"type": "bullet", "content":"Rewards. For certain promotions, Merchants may issue out coupons to Eaters of their choosing. These rewards may include first-time-visit rewards and holiday rewards."},
+						{"type": "bullet", "content":"Loyalty Points. If the Merchant has created their loyalty program with Shareat, after you pay the Merchant through the Shareat application, you will receive loyalty points for the Merchant. Once these loyalty points hit a certain number, you can redeem them from the Merchant."}
+
+					]
+				}
+			]
+		},
+		{
+			"header": "3. Trials",
+			"paragraph": [
+				{"type": "info", "content": "If you are a Merchant, From time to time, Shareat may offer you a trial membership that includes standard access to the Shareat Platform during the trial period. Unless otherwise communicated, a trial begins at the moment of sign up and ends at 11:59 am Local Time. A one week trial, for example ends on the fifth day of the trial."}
+			]
+		},
+		{
+			"header": "4. Updates",
+			"paragraph": [
+				{"type": "info", "content": "Shareat may, from time to time, update the Shareat App in order but not limited to upgrade theapp, fix bugs, patches, corrections, or add any modifications. You acknowledge that Shareat is not obligated to provide updates nor continually provide any particular features or any functionality."}
+			]
+		},
+		{
+			"header": "5. Disclaimers",
+			"paragraph": [
+				{"type": "info", "content": "The following disclaimers are made on behalf of Shareat and our employees."},
+				{"type": "info", "content": "Shareat does not provide food services, and Shareat is not a restaurant. Food and other products offered via Shareat are offered and provided by Merchants, not Shareat. Shareat has no control over the quality and safety of any food. As an Eater, your selection and use of food and services and your engagement with Merchants is solely at your own risk. In no event shall Shareat be liable for any act, representation, error or omission by Merchants, including, but is not limited to, any way related to an Eater’s visit to a Merchant, an Eater’s consumption of food, or the performance or non-performance of any Merchant. Shareat is not an agent of any Merchant."},
+				{"type": "info", "content": "The Shareat Platform is provided on an “as is” and “as available” basis and without any warranty or condition. Shareat does not guarantee and does not promise any specific results from eating at Merchants, including the performance of Merchants and the quality of their food."},
+				{"type": "info", "content": "Shareat is also not a payment company. Shareat is not responsible for any error made by Spreedly, the payment company that powers payments on the Shareat Platform."}
+			]
+		},
+		{
+			"header": "6. Indemnification",
+			"paragraph": [
+				{"type": "info", "content": "To the maximum extent permitted by applicable law, you agree to release, defend (at Shareat’s option), indemnify and hold Shareat and each of our employees, agents or shareholders harmless from and against any claims, actions, suits, losses, costs, liabilities, damages and expenses (including reasonable attorney’s fees), arising out of or in any way related to (1) your breach of these Terms of Use; (2) your improper use of the Shareat Platform (3) your violation of any law or the rights of a third party, including Eaters, Merchants, other people in the restaurants, as a result of your own interaction with such third party;"}
+			]
+		},
+		{
+			"header": "7. Limitation of Liability ",
+			"paragraph": [
+				{"type": "info", "content": "In no event will Shareat, including our employees, agents or shareholders be liable to you for any incidental, special, exemplary, punitive, consequential, or indirect damages (including damages for deletion, corruption, loss of data, loss of programs, failure to store any information or other content maintained by the Shareat Platform). "}
+			]
+		},
+		{
+			"header": "8. Term and Termination",
+			"paragraph": [
+				{"type": "info", "content": "This Agreement is effective upon your creation of a User account. You understand and agree that, at any time and without prior notice, Shareat may terminate, cancel or deactivate your subscription and account. If Shareat determines that you have violated these Terms or otherwise engaged in illegal or improper use of the Shareat Platform, your account may be terminated by Shareat immediately. You agree that Shareat will not be liable to you or any third party for any termination to the service regardless of the reason for such termination. You acknowledge that your only right with respect to any dissatisfaction with any discontinuation of service made by us is to cancel or terminate your subscription. "}
+			]
+		}	
+	]
+}
