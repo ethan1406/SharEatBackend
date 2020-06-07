@@ -24,11 +24,13 @@ const MerchantSchema = mongoose.Schema({
         first_payment_time: Date,
         charges: [{
             time: Date,
+            chargeId: mongoose.Schema.Types.ObjectId,
             amazonUserSub: String
         }]
     }],
     rewards:  [{
         reward: String,
+        rewardId: mongoose.Schema.Types.ObjectId,
         pointsRequired: Number,
         redemptions: [{
             time: Date,

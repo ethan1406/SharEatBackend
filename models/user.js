@@ -26,8 +26,14 @@ var UserSchema = mongoose.Schema({
         description: String,
         address: String,
         points: Number,
+        immediateRewards: [{
+            rewardName: String,
+            rewardId: String
+        }],
         redemptions: [{
-            time: Date
+            time: Date,
+            rewardName: String,
+            rewardId: String
         }]
     }],
     cards : [{

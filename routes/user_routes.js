@@ -181,11 +181,14 @@ router.get('/:amazonUserSub/getRewards', async (req, res) => {
         const restaurantAmazonUserSub = req.query.restaurantAmazonUserSub;
         const amazonUserSub = req.params.amazonUserSub;
 
+        if (restaurantAmazonUserSub === undefined) {
+            return res.status(400).send('please provide restaurant id.');
+        }
+
         const { loyaltyPoints } = await User.findOne({amazonUserSub: amazonUserSub}, 'loyaltyPoints').exec();
         const merchant = await Merchant.findOne({amazonUserSub: restaurantAmazonUserSub}).exec();
 
-        const rewardResponse = merchant.rewards.filter(reward => reward.pointsRequired != 0)
-                            .map(reward => { return {reward: reward.reward, pointsRequired: reward.pointsRequired};});
+        const rewardResponse = merchant.rewards;
 
         var points = 0;
         const pointToRestaurant = loyaltyPoints.find(loyaltyPoint => loyaltyPoint.restaurantAmazonUserSub == restaurantAmazonUserSub);
@@ -235,6 +238,62 @@ router.get('/contact-us', async (req, res) => {
 });
 
 
+router.post('/:amazonUserSub/deductPoints', async (req, res) => {
+    try {
+        const amazonUserSub = req.params.amazonUserSub;
+        const {points, restaurantAmazonUserSub, rewardName, rewardId} = req.body;
+
+        const user = await User.findOne({amazonUserSub: amazonUserSub}, 'loyaltyPoints').exec();
+        const merchant = await Merchant.findOne({amazonUserSub: restaurantAmazonUserSub}, 'rewards').exec();
+
+        // saving user information
+        var rewardProgram = user.loyaltyPoints.find(rewardProgram => rewardProgram.restaurantAmazonUserSub === restaurantAmazonUserSub);
+        if (rewardProgram.redemptions === undefined || rewardProgram.redemptions === null) {
+            rewardProgram['redemptions'] = [];
+        }
+        
+        const currentTime = Date.now();
+
+        rewardProgram.redemptions.push({
+            time: currentTime,
+            rewardName,
+            rewardId
+        });
+
+        if (points > rewardProgram.points) {
+            return res.status(400).send('not enough points for redempiton');
+        }
+
+        if (points === 0 && rewardProgram.immediateRewards.find(immediateReward => immediateReward.rewardId === rewardId) === undefined) {
+            return res.status(400).send('user is not qualified for this reward');
+        }
+
+        rewardProgram.immediateRewards = rewardProgram.immediateRewards.filter(immediateReward => immediateReward.rewardId !== rewardId);
+        rewardProgram.points -= points;
+        
+
+        //saving merchant information
+        const reward = merchant.rewards.find(reward => reward._id.toString() === rewardId);
+
+        if (reward === undefined) {
+            return res.status(400).send('invalid reward Id');
+        }
+        reward.redemptions.push({
+            time: currentTime,
+            amazonUserSub
+        });
+
+
+        await user.save();
+        await merchant.save();
+
+        return res.status(200).json({redemptionTime: currentTime});
+    } catch(err) {
+        return res.sendStatus(500);
+    }
+});
+
+
 router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
     const {subTotal, tip, tax, points,
         ticketId, restaurantOmnivoreId, partyId, restaurantAmazonUserSub} = req.body;
@@ -272,7 +331,7 @@ router.post('/:amazonUserSub/makePayment', async (req, res, next) => {
             }
         });
 
-        const currentTime =  moment().tz('America/Los_Angeles').format();
+        const currentTime = moment().tz('America/Los_Angeles').format();
 
         // creating new member
         if (!isReturning) {
